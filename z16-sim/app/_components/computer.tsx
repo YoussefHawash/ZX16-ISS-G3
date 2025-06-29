@@ -1,7 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { cpu } from "@/lib/cpu";
+import { useMemory } from "@/lib/MemoryContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import CodeWindow from "./codewindow";
 import KeyboardLayout from "./keyboard";
@@ -9,13 +11,11 @@ import Registers from "./registerTable";
 import Screen from "./screen";
 import Terminal from "./terminal";
 import TextUpload from "./TextUpload";
-
 export default function Computer() {
-  const [memory, setMemory] = useState<string[]>([]);
+  const { memory, setMemory } = useMemory();
   const [clockstate, setClockstate] = useState(0);
   const [PC, setPC] = useState(0);
   const [registers, setRegisters] = useState<string[]>([]);
-  const changedIndex: number[] = [];
   const [Assembly, setAssembly] = useState<string[]>([]);
   const [isPaused, setIsPaused] = useState(true);
 
@@ -49,23 +49,19 @@ export default function Computer() {
       setIsPaused(!isPaused);
     }
   };
-  const step = (step: number) => {
-    if (cpuRef.current && isPaused) {
-      cpuRef.current.setPC(cpuRef.current.getPC() + step);
-      updateDisplay(clockstate);
-    }
-  };
 
   return (
     <>
       <div className="flex-2/3">
-        <div className="flex flex-row items-center justify-between gap-10 p-4">
-          <h1>
-            Clock:{" "}
-            <span className={clockstate ? "text-green-500" : "text-red-700"}>
-              {clockstate}
-            </span>
-          </h1>
+        <div className="flex flex-row items-center justify-between gap-10 px-3 ">
+          <div className="w-20">
+            <h1>
+              Clock:{" "}
+              <span className={clockstate ? "text-green-500" : "text-red-700"}>
+                {clockstate}
+              </span>
+            </h1>
+          </div>
           <h1>Pc: {PC}</h1>
           <div className="flex flex-row items-center gap-2">
             <Button
@@ -93,9 +89,12 @@ export default function Computer() {
             </Button>
           </div>
         </div>
-
+        <div className="h-2"></div>
         <CodeWindow Instructions={Assembly} />
-        <div className="p-4 mx-auto flex justify-end">
+        <div className=" mx-auto flex justify-between items-center ">
+          <Button variant="outline">
+            <Link href="/memory">Inspect Memory</Link>
+          </Button>
           <TextUpload onFileRead={setMemory} />
         </div>
         <Terminal />
@@ -103,7 +102,7 @@ export default function Computer() {
       <div className="flex-1/3 flex flex-col items-center justify-between gap-10">
         <Screen />
         <KeyboardLayout className="w-2/3 " />
-        <Registers values={registers} index={changedIndex} />
+        <Registers values={registers} />
       </div>
     </>
   );

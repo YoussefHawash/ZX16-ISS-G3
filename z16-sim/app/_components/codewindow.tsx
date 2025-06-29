@@ -90,9 +90,8 @@ export default function codeWindow({
   }, [Instructions]);
 
   return (
-    <div className="w-full h-100 mx-auto shadow-lg rounded-lg bg-gray-800">
+    <div className="h-100 ">
       <MonacoEditor
-        className="h-full"
         theme="vs-dark"
         defaultLanguage="asm"
         value={Instructions.join("\n")}

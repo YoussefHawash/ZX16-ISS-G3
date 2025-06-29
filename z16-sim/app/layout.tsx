@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
+import { MemoryProvider } from "@/lib/MemoryContext";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 // Custom font import
@@ -16,13 +17,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={poppins.className}>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <MemoryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </MemoryProvider>
       </body>
     </html>
   );

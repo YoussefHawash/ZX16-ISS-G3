@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Computer from "./_components/computer";
 
-export default function Home() {
+export default function Home({
+  Component,
+  pageProps,
+}: {
+  Component: any;
+  pageProps: any;
+}) {
   return (
     <main className="flex min-h-screen flex-col items-center w-full justify-evenly bg-neutral-950 text-white px-12">
       <Image
@@ -9,9 +15,9 @@ export default function Home() {
         alt=""
         width={1000}
         height={10}
-        className="bg-transparent"
+        className="bg-transparent "
       />
-      <div className="flex flex-row items-center justify-center w-full ">
+      <div className="flex flex-row items-center justify-center w-full">
         <Computer />
       </div>
     </main>

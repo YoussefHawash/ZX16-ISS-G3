@@ -97,13 +97,13 @@ export function resolve_label(labelIndex: number): string {
     console.error("Invalid label index:", labelIndex);
     return "";
   }
+  console;
   if (assembly[labelIndex].includes("label_"))
     return assembly[labelIndex].slice(0, -1);
   // return existing label without colon
   else {
-    const label = `label_${lastLabelIndex}:`;
+    const label = `label_${lastLabelIndex++}:`;
     // assembly.splice(labelIndex, 0, label); // insert the new label at the target index
-    lastLabelIndex++; // increment after using the index
     return `label_${lastLabelIndex}`;
   }
 }

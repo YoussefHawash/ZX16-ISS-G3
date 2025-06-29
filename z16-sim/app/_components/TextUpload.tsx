@@ -23,7 +23,7 @@ export default function TextUpload({ onFileRead }: Props) {
 
   return (
     <div className="p-4 max-w-full">
-      <Button asChild>
+      <Button asChild className="hover:cursor-pointer">
         <label>
           Upload File
           <input

@@ -3,13 +3,7 @@
 import { binaryToDecimal } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
-export default function Registers({
-  values,
-  index,
-}: {
-  values?: string[];
-  index?: number[];
-}) {
+export default function Registers({ values }: { values?: string[] }) {
   return (
     <table className="table-auto w-3/5 border-collapse border border-black text-sm">
       <thead>
@@ -29,9 +23,7 @@ export default function Registers({
           {values?.map((value, i) => (
             <td
               key={i}
-              className={`border border-black px-4 py-2 text-center ${
-                index?.includes(i) ? "bg-yellow-300" : ""
-              }`}
+              className={`border border-black px-4 py-2 text-center `}
             >
               {binaryToDecimal(value)}
             </td>
