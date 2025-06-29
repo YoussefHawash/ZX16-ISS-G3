@@ -1,0 +1,45 @@
+ADD x1, x2          # rd ← rd + rs2
+SUB x1, x2          # rd ← rd - rs2
+SLT x1, x2          # rd ← (rd < rs2) ? 1 : 0
+SLTU x1, x2         # rd ← (unsigned rd < unsigned rs2) ? 1 : 0
+SLL x1, x2          # rd ← rd << (rs2 & 0xF)
+SRL x1, x2          # rd ← rd >> (rs2 & 0xF) (logical)
+SRA x1, x2          # rd ← rd >> (rs2 & 0xF) (arithmetic)
+OR x1, x2           # rd ← rd | rs2
+AND x1, x2          # rd ← rd & rs2
+XOR x1, x2          # rd ← rd ^ rs2
+MV x1, x2           # rd ← rs2
+JR x1               # PC ← rd
+JALR x1, x2         # rd ← PC + 2; PC ← rs2   // I- Type 
+ADDI x1, -42        # rd ← rd + sext(imm7)
+SLTI x1, 10         # rd ← (rd < sext(imm7)) ? 1 : 0
+SLTUI x1, 10        # rd ← (unsigned rd < unsigned sext(imm7)) ? 1 : 0
+SLLI x1, 3          # rd ← rd << imm[3:0]
+SRLI x1, 3          # rd ← rd >> imm[3:0] (logical)
+SRAI x1, 3          # rd ← rd >> imm[3:0] (arithmetic)
+ORI x1, 0x0F        # rd ← rd | sext(imm7)
+ANDI x1, 0x0F       # rd ← rd & sext(imm7)
+XORI x1, 0x0F       # rd ← rd ^ sext(imm7)
+LI x1, 42           # rd ← sext(imm7)   
+J label             # PC ← PC + offset            // j-type
+JAL x1, function    # rd ← PC + 2; PC ← PC + offset
+ECALL 0x002         # trap to service number [15:6]   ///sys-type  
+BEQ x1, x2, label   # if rs1 == rs2: PC ← PC + offset /// B-tYpe
+BNE x1, x2, label   # if rs1 != rs2: PC ← PC + offset
+BZ x1, label        # if rs1 == 0: PC ← PC + offset
+BNZ x1, label       # if rs1 != 0: PC ← PC + offset
+BLT x1, x2, label   # if rs1 < rs2: PC ← PC + offset (signed)
+BGE x1, x2, label   # if rs1 >= rs2: PC ← PC + offset (signed)
+BLTU x1, x2, label  # if rs1 < rs2: PC ← PC + offset (unsigned)
+BGEU x1, x2, label  # if rs1 >= rs2: PC ← PC + offset (unsigned) 
+
+SB x1, 4(x2)        # mem[rs1 + sext(imm)] ← rs2[7:0] // s-type
+SW x1, -2(x2)       # mem[rs1 + sext(imm)] ← rs2[15:0]
+
+LB x1, 4(x2)        # rd ← sext(mem[rs2 + sext(imm)][7:0])   // l-type
+LW x1, -2(x2)       # rd ← mem[rs2 + sext(imm)][15:0]
+
+LBU x1, 4(x2)       # rd ← zext(mem[rs2 + sext(imm)][7:0])
+
+LUI x1, 0x1000      # rd ← (imm[15:7] << 7)         // u-type
+AUIPC x1, 0x1000    # rd ← PC + (imm[15:7] << 7)

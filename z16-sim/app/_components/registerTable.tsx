@@ -1,7 +1,6 @@
 "use client";
 
 import { binaryToDecimal } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
 
 export default function Registers({ values }: { values?: string[] }) {
   return (

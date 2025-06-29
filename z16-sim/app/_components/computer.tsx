@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { cpu } from "@/lib/cpu";
 import { useMemory } from "@/lib/MemoryContext";
+import { cp } from "fs";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +12,7 @@ import Registers from "./registerTable";
 import Screen from "./screen";
 import Terminal from "./terminal";
 import TextUpload from "./TextUpload";
+
 export default function Computer() {
   const { memory, setMemory } = useMemory();
   const [clockstate, setClockstate] = useState(0);
@@ -18,8 +20,10 @@ export default function Computer() {
   const [registers, setRegisters] = useState<string[]>([]);
   const [Assembly, setAssembly] = useState<string[]>([]);
   const [isPaused, setIsPaused] = useState(true);
+  const [history, setHistory] = useState<string[]>([]);
 
   const cpuRef = useRef<cpu | null>(null);
+
   const updateDisplay = (state: number) => {
     if (!cpuRef.current) return;
     setRegisters(cpuRef.current.getRegisters());
@@ -97,7 +101,7 @@ export default function Computer() {
           </Button>
           <TextUpload onFileRead={setMemory} />
         </div>
-        <Terminal />
+        <Terminal history={history} />
       </div>
       <div className="flex-1/3 flex flex-col items-center justify-between gap-10">
         <Screen />

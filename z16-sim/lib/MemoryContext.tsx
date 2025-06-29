@@ -1,4 +1,4 @@
-// lib/MemoryContext.tsx
+// UI RELATED CODE
 "use client";
 
 import { createContext, ReactNode, useContext, useState } from "react";
