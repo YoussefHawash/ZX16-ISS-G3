@@ -1,17 +1,16 @@
+
 # G3 - ZX16 Instruction Set Simulator (ISS)
 
 ## Project Objective
 
-The goal of this project is to design and implement an **Instruction Set Simulator (ISS)** for the **ZX16 architecture** - an open-source, educational ISA inspired by RISC-V and developed at the American University in Cairo (AUC). Our simulator emulates the ZX16 CPU, handles memory and register operations, executes binary-encoded instructions, and supports both terminal and visual testing environments.
+The goal of this project is to design and implement an **Instruction Set Simulator (ISS)** for the **ZX16 architecture** - an open-source, educational ISA inspired by RISC-V and developed at the American University in Cairo (AUC). Our simulator emulates the ZX16 CPU, handles memory and register operations, executes binary-encoded instructions, and supports both terminal and visual testing environments, while enriching user experience with tools that will help them throught the simulation such as, **Memory Inspector** and **Binary to Hex Converter**.
 
 We extended the project with a complete **graphical frontend**, making it intuitive for users to load `.bin` files, step through instructions, and visually debug CPU behavior.
-
----
 
 ## Key Features
 
 - **Full ZX16 ISA instruction support**
-- **Real-time disassembly** via a custom-built disassembler
+- **Real-time disassembling** via a custom-built disassembler
 - **64 KB memory map** with hardware-mapped I/O
 - **2D Tiled Graphics System** (320 * 240 QVGA resolution)
 - **Interactive Keyboard Input**
@@ -20,13 +19,14 @@ We extended the project with a complete **graphical frontend**, making it intuit
 - **Step, Pause, Resume** execution control
 - **Web Interface** built with Next.js + Monaco Editor
 
----
+
 
 ## Repository Structure
 
 ```bash
-.
-├── components/              # Frontend React components
+├ z16-sim/                   # Next JS Website
+├- app/  
+├── _components/              # Frontend React components
 │   ├── codewindow.tsx       # Monaco editor with syntax highlighting
 │   ├── computer.tsx         # Main CPU interface container
 │   ├── keyboard.tsx         # Virtual keyboard visualization
@@ -34,16 +34,14 @@ We extended the project with a complete **graphical frontend**, making it intuit
 │   ├── screen.tsx           # Tile-based display
 │   ├── terminal.tsx         # CLI logger
 │   └── TextUpload.tsx       # Upload component for .bin files
-├── lib/
+├─lib/
 │   ├── cpu.ts               # Core simulation logic
 │   ├── disassembler.ts      # Machine code to human-readable translation
-│   ├── utils.ts             # Binary <-> decimal/string utilities
+│   ├── utils.ts             # Utilities
 │   ├── z16-INST.json        # Instruction format definitions
-├── public/
+├─ public/
 │   └── monaco/              # Monaco Editor dependency
 ```
-
----
 
 ## Design Overview
 
@@ -62,105 +60,23 @@ We extended the project with a complete **graphical frontend**, making it intuit
   - Terminal command interaction
   - File upload and memory binding
 
----
 
-### Graphics System Architecture
+## Build Instructions & Usage Guide
+You should have **Node Js** install on your device through this [Link](https://nodejs.org/en/download)
 
-The ZX16 ISS features a memory-mapped 2D **tiled graphics engine** that emulates classic game console behavior. The virtual screen is composed of tiles, and each tile references packed pixel data and a shared color palette.
-
-#### Display Overview
-
-| Property              | Value                        |
-|-----------------------|------------------------------|
-| Resolution            | 320 * 240 pixels (QVGA)      |
-| Tile Dimensions       | 16 * 16 pixels               |
-| Screen Grid           | 20 * 15 tiles (300 total)    |
-| Color Depth           | 4 bits per pixel (16 colors) |
-
----
-
-#### Memory Map Layout
-
-| Memory Region       | Address Range       | Size    | Purpose |
-|---------------------|---------------------|---------|---------|
-| **Tile Map Buffer** | `0xF000 - 0xF12B`    | 300 B   | Row-major grid of tile IDs (0-15) for screen layout |
-| **Tile Definitions**| `0xF200 - 0xF9FF`    | 2048 B  | Pixel data for 16 tiles (128 bytes per tile) |
-| **Color Palette**   | `0xFA00 - 0xFA0F`    | 16 B    | 16-entry palette defining RGB colors |
-
----
-
-#### Tile Data Storage
-
-Each tile is a 16 * 16 pixel square, so it has **256 pixels total**. Every pixel uses 4 bits to choose one of the 16 palette colors.
-
-Since **1 byte = 8 bits**, each byte holds **two pixels**:
-
-- **Low nibble** (4 bits): the **first pixel**
-- **High nibble** (4 bits): the **second pixel**
-
-##### How it works:
-
-| Byte | Pixel Contents           |
-|------|---------------------------|
-| 0    | Pixel 0 (low), Pixel 1 (high) |
-| 1    | Pixel 2 (low), Pixel 3 (high) |
-| ...  | ...                         |
-| 127  | Pixel 254 (low), Pixel 255 (high) |
-
-Each tile is exactly **128 bytes** long:
+### Install Dependencies 
+```bash
+npm install --global yarn
+cd ./z16-sim
+yarn install
 ```
-256 pixels * 4 bits per pixel / 8 bits per byte = 128 bytes
-```
-
-So in the memory:
-```
-Byte 0:  [Pixel 0 | Pixel 1]
-Byte 1:  [Pixel 2 | Pixel 3]
-...
-Byte 127: [Pixel 254 | Pixel 255]
-```
-
-This compact format lets the system store high-resolution color tiles in very little space, perfect for old-school games and low-memory environments.
-
----
-
-#### Color Palette Format
-
-Each color is defined in a single byte using compact RGB encoding:
-
-| Component | Bits Used | Bit Positions |
-|-----------|-----------|----------------|
-| Red       | 3 bits    | [7, 6, 5]       |
-| Green     | 3 bits    | [4, 3, 2]       |
-| Blue      | 2 bits    | [1, 0]          |
-
-Example:
-```
-0b10011001 -> R = 4, G = 6, B = 1 (a bright greenish color)
-```
-
----
-
-#### Rendering Process Summary
-
-1. **Tile Map**: Emulator reads tile indices (0-15) from `0xF000`.
-2. **Tile Data**: Each index maps to a tile definition starting at `0xF200`.
-3. **Color Index**: Pixels in the tile point to 4-bit color entries.
-4. **Palette**: Index is converted to RGB via lookup from `0xFA00`.
-5. **Output**: The 320 * 240 screen is drawn based on decoded RGB values.
-
----
-
-## Usage Guide
 
 ### Run Locally
-
 ```bash
-yarn install
 yarn run dev
 ```
+Navigate to the link provided in the cmd response after  **" Local: "**
 
-Navigate to: [http://localhost:3000](http://localhost:3000)
 
 ### Interface Controls
 
@@ -173,8 +89,6 @@ Navigate to: [http://localhost:3000](http://localhost:3000)
   - Graphics display
   - Keyboard input
   - Console logs
-
----
 
 ## Testing Strategy
 
@@ -192,33 +106,34 @@ Each test case is documented with:
 - Test ID & Objective
 - Steps
 - Expected register/memory/console state
+--- 
+### Test ID: TC-ZX16-01
+#### Objective:
+#### Steps:
+#### Expected Results
+--- 
+### Test ID: TC-ZX16-02
+#### Objective:
+#### Steps:
+#### Expected Results
+--- 
+### Test ID: TC-ZX16-03
+#### Objective:
+#### Steps:
+#### Expected Results
+ --- 
+ 
 
-We ensured **requirement coverage** for:
-- Arithmetic, logic, memory ops, branching
-- Ecall service behavior
-- Graphics rendering and palette mapping
-
----
-
-## Accomplishments
-
-- Fully functional simulator with **interactive frontend**
-- All **ZX16 ISA instructions** implemented
-- Tile memory graphics rendered according to ZX16 specs
-- **Live register/memory view** for debugging
-- Accurate **disassembler output** with dynamic updates
-- 10+ test cases with expected outputs
-- Git-based workflow and modular architecture
-
----
+## Project Challenges
+To Be Written After The Project ends.....
 
 ## Team Members
 
-- Youssef Hawash
+- Youssef Hawash 
 - Ahmed Elzahaby
 - Mahmoud Aly
 
----
+
 
 ## References
 
