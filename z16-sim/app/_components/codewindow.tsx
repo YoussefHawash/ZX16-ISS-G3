@@ -90,22 +90,22 @@ export default function codeWindow({
   }, [Instructions]);
 
   return (
-    <div className="h-100 ">
+    <div className="h-100 t">
       <MonacoEditor
         theme="vs-dark"
         defaultLanguage="asm"
         value={Instructions.join("\n")}
         onMount={handleEditorDidMount}
         options={{
-          readOnly: true, // ← disables all typing
+          readOnly: true,
           minimap: { enabled: false },
-          contextmenu: false, // optional: disable right-click menu
-          lineNumbers: "on",
+          contextmenu: false,
+          lineNumbers: (lineNumber: any) =>
+            `0x${((lineNumber - 1) * 2).toString(16).toUpperCase()}`,
           glyphMargin: false,
           folding: false,
           overviewRulerLanes: 0,
           overviewRulerBorder: false,
-          // disable occurrence/selection highlights (which also draw in the ruler)
           occurrencesHighlight: "off",
           selectionHighlight: false,
           fontSize: 24,

@@ -49,7 +49,6 @@ export default function Terminal({
           Object.entries(localhistory).map(([timestamp, cmd], index) => (
             <div key={index} className="text-gray-300">
               <span className="text-gray-500 opacity-75">
-                {timestamp} (Usef)
                 <span className="text-green-500">{"> "}</span>
               </span>
               {cmd}

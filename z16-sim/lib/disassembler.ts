@@ -98,22 +98,22 @@ export function instructionFormat(Type: string, ...args: string[]): string {
   return entry && entry[0] ? entry[0] : "UNKNOWN";
 }
 
-// TODO: fix
-export function resolve_label(labelIndex: number): string {
-  if (labelIndex < 0 || labelIndex >= assembly.length) {
-    console.error("Invalid label index:", labelIndex);
-    return "";
-  }
-  console;
-  if (assembly[labelIndex].includes("label_"))
-    return assembly[labelIndex].slice(0, -1);
-  // return existing label without colon
-  else {
-    const label = `label_${lastLabelIndex++}:`;
-    assembly.splice(labelIndex, 0, label); // insert the new label at the target index
-    return `label_${lastLabelIndex}`;
-  }
-}
+// // TODO: fix labels
+// export function resolve_label(labelIndex: number): string {
+//   if (labelIndex < 0 || labelIndex >= assembly.length) {
+//     console.error("Invalid label index:", labelIndex);
+//     return "";
+//   }
+//   console;
+//   if (assembly[labelIndex].includes("label_"))
+//     return assembly[labelIndex].slice(0, -1);
+//   // return existing label without colon
+//   else {
+//     const label = `label_${lastLabelIndex++}:`;
+//     assembly.splice(labelIndex, 0, label); // insert the new label at the target index
+//     return `label_${lastLabelIndex}`;
+//   }
+// }
 
 // Main disassembly function
 export default function parseInstructionZ16(
@@ -182,8 +182,7 @@ export default function parseInstructionZ16(
         const RS2 = instr.slice(4, 7); // bits[11:9] is RS2
         const RS1 = instr.slice(7, 10); // bits[8:6] is RS1
         const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
-        // TODO
-        const label = resolve_label(i + offset / 2);
+        // const label = resolve_label(i + offset / 2);
         const name = instructionFormat("B", funct3);
         if (["BZ", "BNZ"].includes(name)) {
           console.log("Branch instruction:", name);
@@ -244,7 +243,7 @@ export default function parseInstructionZ16(
         const immBits = imm9_4 + imm3_1 + "0";
         const offset = binaryToDecimal(immBits, true); // Z16 uses 10 bits for J-Type
 
-        const label = resolve_label(i + offset / 2);
+        // const label = resolve_label(i + offset / 2);
         const name = instructionFormat("J", f);
 
         // both use RD as the link/destination register
@@ -265,7 +264,6 @@ export default function parseInstructionZ16(
         const lo3 = instr.slice(10, 13); // bits[5:3] is lo3
         const immBits = hi6 + lo3;
         const name = instructionFormat("U", f);
-        // TODO: fix
         assembly[i] = `${name} ${binToHex(RD, true)}, ${binToHex(
           immBits,
           false

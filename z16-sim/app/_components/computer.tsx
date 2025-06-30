@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { cpu } from "@/lib/cpu";
 import { useMemory } from "@/lib/MemoryContext";
+import { binToHex, decimalToBinary } from "@/lib/utils";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -80,7 +81,9 @@ export default function Computer() {
               </span>
             </h1>
           </div>
-          <h1>Pc: {PC}</h1>
+          <h1>
+            Pc: {`0x${(PC * 2).toString(16).toUpperCase().padStart(4, "0")}`}
+          </h1>
           <div className="flex flex-row items-center gap-2">
             <Button
               onClick={() => {
