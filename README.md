@@ -188,7 +188,7 @@ Each test case is documented with:
 
 #### Objective: TestingR-Type Instructions and Two Ecalls
 
-#### Expected Results: x1= 63 , x3=2, the rest stay unmodified
+#### Expected Results: x1=x5= -4 , x2=x3=-1, the rest stay unmodified
 
 ---
 

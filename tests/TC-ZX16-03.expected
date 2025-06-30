@@ -1,11 +1,11 @@
-Add x1 ,x2 
-SLTU x2 ,x1  
-XORI x2, -1      
-SLL x2 ,x1   
-SRA x3  x2   
-OR  x1 , x3  
-OR x3, x2  
-XOR x2, x4	
-MV  x5 ,x1      
-ECALL 0x008
-ECALL 0x00A
+SLTU x2, x1
+XORI x2, 0x7F
+SLL x2, x1
+LI x3, 0x70
+SRAI x3, 0x02
+OR x1, x3
+OR x3, x2
+XOR x2, x4
+MV x5, x1
+ECALL 8    # Registers Dump
+ECALL 10    # Program Exit
