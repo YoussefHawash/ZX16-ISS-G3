@@ -196,7 +196,7 @@ export default function parseInstructionZ16(
             RS2,
             true
           )}, ${offset}`;
-          words[i] = [name, RS1, RS2, imm4_1];
+          words[i] = [name, RS1, RS2, decimalToBinary(offset, 4)];
         }
         continue;
       }

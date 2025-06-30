@@ -82,7 +82,8 @@ export default function Computer() {
             </h1>
           </div>
           <h1>
-            Pc: {`0x${(PC * 2).toString(16).toUpperCase().padStart(4, "0")}`}
+            Program Counter:{" "}
+            {`0x${(PC * 2).toString(16).toUpperCase().padStart(4, "0")}`}
           </h1>
           <div className="flex flex-row items-center gap-2">
             <Button
@@ -93,6 +94,21 @@ export default function Computer() {
               className="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
               {isPaused ? "Play" : isHalted ? "Reset" : "Pause"}
+            </Button>
+            <Button
+              variant={"secondary"}
+              onClick={() => {
+                if (!cpuRef.current) return;
+                if (isHalted) {
+                  initializeCPU();
+                }
+                cpuRef.current?.step();
+                updateDisplay(0);
+              }}
+              type="submit"
+              className="cursor-pointer bg-transparent hover:bg-transparent text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            >
+              <ArrowRight />
             </Button>
           </div>
         </div>

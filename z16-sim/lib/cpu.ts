@@ -26,7 +26,9 @@ export class cpu {
     this.Assembly = parsedInstruction[0];
     this.words = parsedInstruction[1];
   }
-
+  step(this: cpu): void {
+    if (this.paused) this.ExecuteInstruction(this.PC);
+  }
   togglePause(this: cpu) {
     this.paused = !this.paused;
   }
