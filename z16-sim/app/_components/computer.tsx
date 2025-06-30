@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { cpu } from "@/lib/cpu";
 import { useMemory } from "@/lib/MemoryContext";
-import { cp } from "fs";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -14,43 +13,58 @@ import Terminal from "./terminal";
 import TextUpload from "./TextUpload";
 
 export default function Computer() {
+  const cpuRef = useRef<cpu | null>(null);
   const { memory, setMemory } = useMemory();
   const [clockstate, setClockstate] = useState(0);
   const [PC, setPC] = useState(0);
   const [registers, setRegisters] = useState<string[]>([]);
   const [Assembly, setAssembly] = useState<string[]>([]);
   const [isPaused, setIsPaused] = useState(true);
+  const [isHalted, setIsHalted] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-
-  const cpuRef = useRef<cpu | null>(null);
 
   const updateDisplay = (state: number) => {
     if (!cpuRef.current) return;
     setRegisters(cpuRef.current.getRegisters());
     setPC(cpuRef.current.getPC());
     setClockstate(state);
+    setHistory(cpuRef.current?.getTerminal() || []);
+    setIsPaused(cpuRef.current.getPaused());
+    setIsHalted(cpuRef.current.getHalted());
   };
-  useEffect(() => {
+  function initializeCPU(): () => void {
+    let cpuinstance: cpu | null = null;
     if (memory.length > 0) {
-      const cpuinstance = new cpu(memory);
-      cpuRef.current = cpuinstance;
-
-      setRegisters(cpuinstance.getRegisters());
+      if (!cpuRef.current) {
+        cpuinstance = new cpu(memory);
+        cpuRef.current = cpuinstance;
+      } else {
+        cpuinstance = cpuRef.current;
+      }
+      cpuinstance.Reset();
       setAssembly(cpuinstance.getAssembly());
-      cpuinstance.setPC(0);
-
-      const clock = cpuinstance.clock(2, (state) => {
+      const clock = cpuinstance.clock(2, (state: number) => {
         updateDisplay(state);
       });
       return () => {
         clock();
       };
     }
+    return () => {
+      // No-op if memory is empty
+    };
+  }
+  useEffect(() => {
+    initializeCPU();
   }, [memory]);
+
   const handlePause = () => {
     if (cpuRef.current) {
-      cpuRef.current.togglePause();
-      setIsPaused(!isPaused);
+      if (isHalted) {
+        initializeCPU();
+      } else {
+        cpuRef.current.togglePause();
+      }
     }
   };
 
@@ -69,27 +83,13 @@ export default function Computer() {
           <h1>Pc: {PC}</h1>
           <div className="flex flex-row items-center gap-2">
             <Button
-              onClick={() => {}}
-              type="submit"
-              className="cursor-pointer bg-transparent hover:bg-gray-700 text-white  rounded focus:outline-none focus:shadow-outline "
-            >
-              <ArrowLeft />
-            </Button>
-            <Button
               onClick={() => {
                 handlePause();
               }}
               type="submit"
               className="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
-              {isPaused ? "Play" : "Pause"}
-            </Button>
-            <Button
-              onClick={() => {}}
-              type="submit"
-              className="cursor-pointer  bg-transparent hover:bg-gray-700 text-white rounded focus:outline-none focus:shadow-outline "
-            >
-              <ArrowRight />
+              {isPaused ? "Play" : isHalted ? "Reset" : "Pause"}
             </Button>
           </div>
         </div>

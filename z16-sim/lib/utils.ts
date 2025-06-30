@@ -44,7 +44,6 @@ export function binaryToDecimal(binStr: string, signed = false): number {
   return isNegative ? unsignedVal - (1 << width) : unsignedVal;
 }
 
-// TODO
 // Convert decimal number to binary string,
 export function decimalToBinary(num: number, width: number): string {
   // signed two’s-complement

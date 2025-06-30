@@ -1,0 +1,14 @@
+ADDi x1 ,45  
+LI x2,33    
+LI x3 ,77
+SLTUI x2 ,30  
+XORI x2, -1       
+ADDI x2, 1       
+SLLI x2 ,3    
+SRAI x3  4    
+ORI  x1 , 22   
+ANDI x3, 85  
+XORI x2, 55	
+XOR x2, x2       
+ECALL 0x008
+ECALL 0x00A

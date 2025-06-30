@@ -1,0 +1,10 @@
+LI x3, 0x05
+LI x4, 0x05
+BEQ x3, x4, 4
+LI x5, 0x3E
+LI x5, 0x2A
+LI x6, 0x00
+BZ x6, 4    
+LI x5, 0x3E
+ECALL 8    # Registers Dump
+ECALL 10    # Program Exit

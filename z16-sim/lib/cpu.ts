@@ -12,6 +12,7 @@ export class cpu {
   private words: string[][] = [];
   private halted: boolean = false;
   private paused: boolean = true;
+  private Terminal: string[] = ["Welcome to Z16 Simulator"];
 
   constructor(memory: string[]) {
     this.memory = memory;
@@ -26,7 +27,13 @@ export class cpu {
   togglePause(this: cpu) {
     this.paused = !this.paused;
   }
-
+  Reset(this: cpu) {
+    this.PC = 0x0000;
+    this.registers.fill("0000000000000000");
+    this.halted = false;
+    this.paused = true;
+    this.Terminal = ["Welcome to Z16 Simulator"];
+  }
   clock(frequencyHz: number, callback: (state: 0 | 1) => void): () => void {
     let state: 0 | 1 = 1;
     const halfPeriodMs = 1000 / (2 * frequencyHz);
@@ -34,20 +41,18 @@ export class cpu {
     const intervalId = setInterval(() => {
       // Reverse the state
       state = state === 0 ? 1 : 0;
-      // Refresh UI
-      callback(state);
       // Execute instruction positive edge detector
       if (state === 0 && !this.paused) this.ExecuteInstruction(this.PC);
-
+      // Refresh UI
+      callback(state);
       if (this.PC >= this.words.length || this.halted) {
-        console.log("Program finished execution.");
-        return () => clearInterval(intervalId);
+        clearInterval(intervalId);
+        return;
       }
     }, halfPeriodMs);
     // Return a function to stop the clock
     return () => clearInterval(intervalId);
   }
-
   //Getters
   getAssembly(this: cpu): string[] {
     return this.Assembly;
@@ -71,6 +76,7 @@ export class cpu {
     return this.MMIO;
   }
   //Setters
+
   setPC(this: cpu, value: number) {
     this.PC = value;
   }
@@ -161,9 +167,11 @@ export class cpu {
       case "SRA": {
         const rd = binaryToDecimal(instruction[1], false);
         const rs = binaryToDecimal(instruction[2], false);
+        const shiftamt = binaryToDecimal(this.registers[rs], true) & 0xf;
+        const signbit = this.registers[rd][0] === "1" ? "1" : "0"; // Preserve sign bit
         this.registers[rd] = decimalToBinary(
-          binaryToDecimal(this.registers[rd], true) >>
-            (binaryToDecimal(this.registers[rs], true) & 15),
+          (binaryToDecimal(this.registers[rd], true) >> shiftamt) |
+            (parseInt(signbit, 2) << (16 - shiftamt)),
           16
         );
         break;
@@ -215,7 +223,8 @@ export class cpu {
       case "JALR": {
         const rd = binaryToDecimal(instruction[1], false);
         const rs = binaryToDecimal(instruction[2], false);
-        this.registers[rd] = decimalToBinary(this.getPC() + 2, 16);
+        this.registers[rd] = decimalToBinary(this.getPC() + 1, 16);
+        this.setPC(binaryToDecimal(this.registers[rs], false));
         break;
       }
       // I-Type Instructions
@@ -226,8 +235,6 @@ export class cpu {
           binaryToDecimal(this.registers[rd], true) + imm,
           16
         );
-        this.handleSyscall(8);
-
         break;
       }
       case "SLTI": {
@@ -239,7 +246,7 @@ export class cpu {
         );
         break;
       }
-      case "SLTUI ": {
+      case "SLTUI": {
         const rd = binaryToDecimal(instruction[1], false);
         const imm = binaryToDecimal(instruction[2], false);
         this.registers[rd] = decimalToBinary(
@@ -266,12 +273,13 @@ export class cpu {
         );
         break;
       }
-      //TODO: NOT WORKING
       case "SRAI": {
         const rd = binaryToDecimal(instruction[1], false);
         const imm = binaryToDecimal(instruction[2], false);
+        const signBit = this.registers[rd][0] === "1" ? "1" : "0"; // Preserve sign bit
         this.registers[rd] = decimalToBinary(
-          binaryToDecimal(this.registers[rd], true) >> imm,
+          (binaryToDecimal(this.registers[rd], true) >> imm) |
+            (parseInt(signBit, 2) << (16 - imm)),
           16
         );
         break;
@@ -316,16 +324,19 @@ export class cpu {
         return;
       }
       case "JAL": {
-        const offset = binaryToDecimal(instruction[1], true) / 2;
-        const rd = binaryToDecimal(instruction[2], false);
-        this.registers[rd] = decimalToBinary(this.getPC() + 2, 16);
+        const offset = binaryToDecimal(instruction[2], true) / 2;
+        console.log("JAL offset:", offset);
+        const rd = binaryToDecimal(instruction[1], false);
+        this.registers[rd] = decimalToBinary(this.getPC() + 1, 16);
         this.setPC(this.getPC() + offset);
         return;
       }
       // Sys-call
       case "ECALL": {
         // Handle system call
+        console.log("System call encountered.");
         const syscallCode = binaryToDecimal(instruction[1], false);
+        this.handleSyscall(syscallCode);
         break;
       }
       case "BEQ": {
@@ -351,16 +362,10 @@ export class cpu {
         return;
       }
       case "BZ": {
+        console.log("BZ instruction executed");
         const rs1 = binaryToDecimal(instruction[1], false);
         const offset = binaryToDecimal(instruction[2], true) / 2;
         if (binaryToDecimal(this.registers[rs1], true) == 0)
-          this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
-      }
-      case "BZ": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true) / 2;
-        if (binaryToDecimal(this.registers[rs1], true) != 0)
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
         return;
       }
@@ -479,11 +484,43 @@ export class cpu {
         this.registers[rd] = decimalToBinary((imm << 7) + this.getPC(), 16);
         return;
       }
-
       default:
         console.error(`Unknown instruction: ${instruction}`);
     }
     this.incrementPC();
     return;
+  }
+  handleSyscall(this: cpu, syscallCode: number): void {
+    switch (syscallCode) {
+      case 0: // Exit
+        break;
+      case 1: // Print
+        break;
+      case 2: // Read
+        // Implement read functionality if needed
+        break;
+      case 3: // Write
+        // Implement write functionality if needed
+        break;
+      case 8: // Print registers
+        this.Terminal.push("Registers: " + this.registers.join(", "));
+        break;
+      case 10:
+        // Exit the program
+        this.Terminal.push("Program exited.");
+        this.halted = true;
+        break;
+      default:
+        console.error(`Unknown syscall code: ${syscallCode}`);
+    }
+  }
+  getTerminal(this: cpu): string[] {
+    return this.Terminal;
+  }
+  getHalted(this: cpu): boolean {
+    return this.halted;
+  }
+  getPaused(this: cpu): boolean {
+    return this.paused;
   }
 }

@@ -110,7 +110,7 @@ export function resolve_label(labelIndex: number): string {
   // return existing label without colon
   else {
     const label = `label_${lastLabelIndex++}:`;
-    // assembly.splice(labelIndex, 0, label); // insert the new label at the target index
+    assembly.splice(labelIndex, 0, label); // insert the new label at the target index
     return `label_${lastLabelIndex}`;
   }
 }
@@ -183,16 +183,22 @@ export default function parseInstructionZ16(
         const RS1 = instr.slice(7, 10); // bits[8:6] is RS1
         const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
         // TODO
-        const label = resolve_label(i + offset);
-
+        const label = resolve_label(i + offset / 2);
         const name = instructionFormat("B", funct3);
-
-        // Z16 uses two regs: RS1 is the “rd/rs1” field, RS2 is the 2nd source
-        assembly[i] = `${name} ${binToHex(RS1, true)}, ${binToHex(
-          RS2,
-          true
-        )}, ${label}`;
-        words[i] = [name, RS1, RS2, imm4_1];
+        if (["BZ", "BNZ"].includes(name)) {
+          console.log("Branch instruction:", name);
+          assembly[i] = `${name} ${binToHex(RS1, true)}, ${offset}`;
+          words[i] = [name, RS1, decimalToBinary(offset, 4)];
+        }
+        // BNE uses RS1 as the source
+        else {
+          // Z16 uses two regs: RS1 is the “rd/rs1” field, RS2 is the 2nd source
+          assembly[i] = `${name} ${binToHex(RS1, true)}, ${binToHex(
+            RS2,
+            true
+          )}, ${offset}`;
+          words[i] = [name, RS1, RS2, imm4_1];
+        }
         continue;
       }
 
@@ -238,15 +244,15 @@ export default function parseInstructionZ16(
         const immBits = imm9_4 + imm3_1 + "0";
         const offset = binaryToDecimal(immBits, true); // Z16 uses 10 bits for J-Type
 
-        const label = resolve_label(i + offset);
+        const label = resolve_label(i + offset / 2);
         const name = instructionFormat("J", f);
 
         // both use RD as the link/destination register
         if (name === "J") {
-          assembly[i] = `J ${label}`;
+          assembly[i] = `J ${offset}`;
           words[i] = [name, immBits];
         } else {
-          assembly[i] = `${name} ${binToHex(RD, true)}, ${label}`;
+          assembly[i] = `${name} ${binToHex(RD, true)}, ${offset}`;
           words[i] = [name, RD, immBits];
         }
         continue;

@@ -24,7 +24,7 @@ export default function Registers({ values }: { values?: string[] }) {
               key={i}
               className={`border border-black px-4 py-2 text-center `}
             >
-              {binaryToDecimal(value)}
+              {binaryToDecimal(value, true)}
             </td>
           ))}
         </tr>
