@@ -4,6 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --nav: #14181d;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -44,6 +46,8 @@
 }
 
 :root {
+  --nav: #14181d;
+
   --radius: 0.625rem;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -110,6 +114,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --color-background: #1e1e2e;
+  --color-foreground: #e0e0e0;
+  --color-accent: #00f7f7;
+  --color-success: #a6ff00;
+  --color-warning: #fca311;
+  --color-error: #ff3c38;
+  --color-border: #3a3a4f;
+  --color-ring: #00f7f7;
+  --nav: #14181d;
 }
 
 @layer base {

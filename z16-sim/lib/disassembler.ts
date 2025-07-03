@@ -1,28 +1,10 @@
-import {
-  binaryToDecimal,
-  binToHex,
-  decimalToBinary,
-  littleEndianParser,
-} from "./utils";
-import instructionFormatsByType from "./z16-INST.json";
+import { services, Token } from "./Definitions";
+import { binaryToDecimal, binToHex, littleEndianParser } from "./utils";
 
-const services: { [key: number]: string } = {
-  1: "Read String",
-  2: "Read Integer",
-  3: "Print String",
-  4: "Play tone",
-  5: "Set audio volume",
-  6: "Stop Audio playback",
-  7: "Read the keyboard",
-  8: "Registers Dump",
-  9: "Memory Dump",
-  10: "Program Exit",
-};
+import instructionFormatsByType from "@/public/z16-INST.json";
 
 let assembly: string[] = [];
-let words: string[][] = [];
-
-let lastLabelIndex = 0;
+let words: Token[][] = [];
 
 export function instructionFormat(Type: string, ...args: string[]): string {
   let entry: any;
@@ -98,38 +80,13 @@ export function instructionFormat(Type: string, ...args: string[]): string {
   return entry && entry[0] ? entry[0] : "UNKNOWN";
 }
 
-// // TODO: fix labels
-// export function resolve_label(labelIndex: number): string {
-//   if (labelIndex < 0 || labelIndex >= assembly.length) {
-//     console.error("Invalid label index:", labelIndex);
-//     return "";
-//   }
-//   console;
-//   if (assembly[labelIndex].includes("label_"))
-//     return assembly[labelIndex].slice(0, -1);
-//   // return existing label without colon
-//   else {
-//     const label = `label_${lastLabelIndex++}:`;
-//     assembly.splice(labelIndex, 0, label); // insert the new label at the target index
-//     return `label_${lastLabelIndex}`;
-//   }
-// }
-
 // Main disassembly function
 export default function parseInstructionZ16(
   raw: string[]
-): [string[], string[][]] {
-  lastLabelIndex = -1; // reset label index for each disassembly
-
+): [string[], Token[][]] {
   raw = littleEndianParser(raw); // Parsing to construct list of instructions
 
-  // init
-  assembly = new Array(raw.length).fill("");
-
-  //flag
-  let terminate = false;
-
-  for (let i = 0; i < raw.length && !terminate; i++) {
+  for (let i = 0; i < raw.length; i++) {
     const instr = raw[i];
     const opcode = instr.slice(13, 16); // bits[15:13] is opcode
     switch (opcode) {
@@ -144,11 +101,17 @@ export default function parseInstructionZ16(
 
         // JR/JALR: only uses RD as target
         if (name === "JR") {
-          assembly[i] = `JR  ${binToHex(RD, true)}`;
-          words[i] = [name, RD];
+          assembly.push(`JR  ${binToHex(RD, true)}`);
+          words.push([new Token("Inst", name), new Token("Reg", RD)]);
         } else {
-          assembly[i] = `${name} ${binToHex(RD, true)}, ${binToHex(RS2, true)}`;
-          words[i] = [name, RD, RS2];
+          assembly.push(
+            `${name} ${binToHex(RD, true)}, ${binToHex(RS2, true)}`
+          );
+          words.push([
+            new Token("Inst", name),
+            new Token("Reg", RD),
+            new Token("Reg", RS2),
+          ]);
         }
         continue;
       }
@@ -161,42 +124,54 @@ export default function parseInstructionZ16(
 
         // formatting
         if (["SLLI", "SRLI", "SRAI"].includes(name)) {
-          assembly[i] = `${name} ${binToHex(RD, true)}, ${binToHex(
-            imm7.slice(3, 7),
-            false
-          )}`;
-          words[i] = [name, RD, imm7.slice(3, 7)];
+          assembly.push(
+            `${name} ${binToHex(RD, true)}, ${binToHex(
+              imm7.slice(3, 7),
+              false
+            )}`
+          );
+          words.push([
+            new Token("Inst", name),
+            new Token("Reg", RD),
+            new Token("Imm", imm7.slice(3, 7)),
+          ]);
         } else {
-          assembly[i] = `${name} ${binToHex(RD, true)}, ${binToHex(
-            imm7,
-            false
-          )}`;
-          words[i] = [name, RD, imm7];
+          assembly.push(
+            `${name} ${binToHex(RD, true)}, ${binToHex(imm7, false)}`
+          );
+          words.push([
+            new Token("Inst", name),
+            new Token("Reg", RD),
+            new Token("Imm", imm7),
+          ]);
         }
         continue;
       }
       // ───────────── B-Type ─────────────
       case "010": {
-        const imm4_1 = instr.slice(0, 4); // bits[15:12]
-        const offset = binaryToDecimal(imm4_1 + "0", true); // bits[11:9] is imm4_1, add 0 for Z16
+        const imm4_1 = instr.slice(0, 4) + "0"; // bits[15:12]
+        const offset = binaryToDecimal(imm4_1, true); // bits[11:9] is imm4_1, add 0 for Z16
         const RS2 = instr.slice(4, 7); // bits[11:9] is RS2
         const RS1 = instr.slice(7, 10); // bits[8:6] is RS1
         const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
-        // const label = resolve_label(i + offset / 2);
         const name = instructionFormat("B", funct3);
         if (["BZ", "BNZ"].includes(name)) {
-          console.log("Branch instruction:", name);
-          assembly[i] = `${name} ${binToHex(RS1, true)}, ${offset}`;
-          words[i] = [name, RS1, decimalToBinary(offset, 4)];
-        }
-        // BNE uses RS1 as the source
-        else {
-          // Z16 uses two regs: RS1 is the “rd/rs1” field, RS2 is the 2nd source
-          assembly[i] = `${name} ${binToHex(RS1, true)}, ${binToHex(
-            RS2,
-            true
-          )}, ${offset}`;
-          words[i] = [name, RS1, RS2, decimalToBinary(offset, 4)];
+          assembly.push(`${name} ${binToHex(RS1, true)}, ${offset}`);
+          words.push([
+            new Token("Inst", name),
+            new Token("Reg", RS1),
+            new Token("Imm", imm4_1),
+          ]);
+        } else {
+          assembly.push(
+            `${name} ${binToHex(RS1, true)}, ${binToHex(RS2, true)}, ${offset}`
+          );
+          words.push([
+            new Token("Inst", name),
+            new Token("Reg", RS1),
+            new Token("Reg", RS2),
+            new Token("Imm", imm4_1),
+          ]);
         }
         continue;
       }
@@ -210,11 +185,15 @@ export default function parseInstructionZ16(
         const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
         const name = instructionFormat("S", funct3);
 
-        assembly[i] = `${name} ${binToHex(RS1, true)}, ${offset}(${binToHex(
-          RS2,
-          true
-        )})`;
-        words[i] = [name, RS1, decimalToBinary(offset, 4), RS2];
+        assembly.push(
+          `${name} ${binToHex(RS1, true)}, ${offset}(${binToHex(RS2, true)})`
+        );
+        words.push([
+          new Token("Inst", name),
+          new Token("Reg", RS1),
+          new Token("Imm", imm3_0),
+          new Token("Reg", RS2),
+        ]);
         continue;
       }
 
@@ -226,12 +205,15 @@ export default function parseInstructionZ16(
         const RD = instr.slice(7, 10); // bits[8:6] is RD
         const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
         const name = instructionFormat("L", funct3);
-        // load: RD ← [BASE+offset]
-        assembly[i] = `${name} ${binToHex(RD, true)}, ${offset}(${binToHex(
-          RS2,
-          true
-        )})`;
-        words[i] = [name, RD, decimalToBinary(offset, 4), RS2];
+        assembly.push(
+          `${name} ${binToHex(RD, true)}, ${offset}(${binToHex(RS2, true)})`
+        );
+        words.push([
+          new Token("Inst", name),
+          new Token("Reg", RD),
+          new Token("Imm", imm3_0),
+          new Token("Reg", RS2),
+        ]);
         continue;
       }
       // ───────────── J-Type  ─────────────
@@ -243,16 +225,18 @@ export default function parseInstructionZ16(
         const immBits = imm9_4 + imm3_1 + "0";
         const offset = binaryToDecimal(immBits, true); // Z16 uses 10 bits for J-Type
 
-        // const label = resolve_label(i + offset / 2);
         const name = instructionFormat("J", f);
 
-        // both use RD as the link/destination register
         if (name === "J") {
-          assembly[i] = `J ${offset}`;
-          words[i] = [name, immBits];
+          assembly.push(`J ${offset}`);
+          words.push([new Token("Inst", name), new Token("Imm", immBits)]);
         } else {
-          assembly[i] = `${name} ${binToHex(RD, true)}, ${offset}`;
-          words[i] = [name, RD, immBits];
+          assembly.push(`${name} ${binToHex(RD, true)}, ${offset}`);
+          words.push([
+            new Token("Inst", name),
+            new Token("Reg", RD),
+            new Token("Imm", immBits),
+          ]);
         }
         continue;
       }
@@ -264,11 +248,14 @@ export default function parseInstructionZ16(
         const lo3 = instr.slice(10, 13); // bits[5:3] is lo3
         const immBits = hi6 + lo3;
         const name = instructionFormat("U", f);
-        assembly[i] = `${name} ${binToHex(RD, true)}, ${binToHex(
-          immBits,
-          false
-        )}`;
-        words[i] = [name, RD, immBits];
+        assembly.push(
+          `${name} ${binToHex(RD, true)}, ${binToHex(immBits, false)}`
+        );
+        words.push([
+          new Token("Inst", name),
+          new Token("Reg", RD),
+          new Token("Imm", immBits),
+        ]);
         continue;
       }
       // ──────────── SYS-Type  ─────────────
@@ -278,18 +265,15 @@ export default function parseInstructionZ16(
         const name = instructionFormat("SYS", funct3);
         const serviceName = services[binaryToDecimal(service, false)];
 
-        assembly[i] = `${name} ${binaryToDecimal(
-          service,
-          false
-        )}    # ${serviceName}`;
-        words[i] = [name, service];
+        assembly.push(
+          `${name} ${binaryToDecimal(service, false)}    # ${serviceName}`
+        );
+        words.push([new Token("Inst", name), new Token("Reg", service)]);
         continue;
       }
       default:
-        assembly[i] = `UNKNOWN opcode=${opcode}`;
+        assembly.push(`UNKNOWN opcode=${opcode}`);
     }
   }
-  // Remove empty instructions
-  assembly = assembly.filter((instr) => instr.trim() !== "");
   return [assembly, words];
 }

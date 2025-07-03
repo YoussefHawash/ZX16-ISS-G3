@@ -44,7 +44,7 @@ export default function Computer() {
       }
       cpuinstance.Reset();
       setAssembly(cpuinstance.getAssembly());
-      const clock = cpuinstance.clock(2, (state: number) => {
+      const clock = cpuinstance.clock(1_000_000, (state: number) => {
         updateDisplay(state);
       });
       return () => {
@@ -89,6 +89,15 @@ export default function Computer() {
             <Button
               onClick={() => {
                 handlePause();
+                setTimeout(() => {
+                  console.log(
+                    `Program Counter: 0x${cpuRef.current
+                      .getPC()
+                      .toString()
+                      .toUpperCase()
+                      .padStart(4, "0")}`
+                  );
+                }, 1000);
               }}
               type="submit"
               className="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"

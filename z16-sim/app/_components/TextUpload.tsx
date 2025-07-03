@@ -1,10 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-type Props = {
-  onFileRead: (data: string[]) => void; // can also use `string` if joined
-};
-export default function TextUpload({ onFileRead }: Props) {
+import { useComputer } from "@/lib/Context/ComputerContext";
+
+export default function TextUpload() {
+  const { setMemory } = useComputer();
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -16,24 +16,26 @@ export default function TextUpload({ onFileRead }: Props) {
       const binaryStr = Array.from(bytes).map((byte) =>
         byte.toString(2).padStart(8, "0")
       );
-      onFileRead(binaryStr);
+      setMemory(binaryStr);
     };
     reader.readAsArrayBuffer(file);
   };
 
   return (
-    <div className="p-4 max-w-full">
-      <Button asChild className="hover:cursor-pointer">
-        <label>
-          Upload File
-          <input
-            type="file"
-            accept=".bin"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-      </Button>
+    <div className="flex justify-end items-center space-x-2">
+      <label
+        htmlFor="file-upload"
+        className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors border border-blue-700 text-sm"
+      >
+        Upload File
+        <input
+          type="file"
+          accept=".bin"
+          onChange={handleFileChange}
+          id="file-upload"
+          className="hidden"
+        />
+      </label>
     </div>
   );
 }

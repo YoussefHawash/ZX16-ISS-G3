@@ -1,62 +1,27 @@
+import { Token } from "./Definitions";
 import parseInstructionZ16 from "./disassembler";
 import { binaryToDecimal, decimalToBinary } from "./utils";
-
 export class cpu {
   private memory: string[];
   private Assembly: string[] = [];
+  private MMIO: string[] = [];
   private PC: number = 0x0000; // Program Counter
-  private interruptVector: string[];
-  private programCode: string[];
-  private MMIO: string[];
   private registers: string[] = Array(8).fill("0000000000000000");
-  private words: string[][] = [];
+  private words: Token[][] = [];
   private halted: boolean = false;
-  private paused: boolean = true;
   private Terminal: string[] = ["Welcome to Z16 Simulator"];
+  private PressedKeys: Record<string, boolean> = {};
 
   constructor(memory: string[]) {
     this.memory = memory;
-    this.interruptVector = memory.slice(0x0000, 0x0020);
-    this.programCode = memory.slice(0x0020, 0xeffe);
+    const interruptVector = memory.slice(0x0000, 0x0020);
+    const programCode = memory.slice(0x0020, 0xeffe);
     this.MMIO = memory.slice(0xf000, 0xffff);
     const parsedInstruction = parseInstructionZ16(
-      this.interruptVector.concat(this.programCode)
+      interruptVector.concat(programCode)
     );
-
     this.Assembly = parsedInstruction[0];
     this.words = parsedInstruction[1];
-  }
-  step(this: cpu): void {
-    if (this.paused) this.ExecuteInstruction(this.PC);
-  }
-  togglePause(this: cpu) {
-    this.paused = !this.paused;
-  }
-  Reset(this: cpu) {
-    this.PC = 0x0000;
-    this.registers.fill("0000000000000000");
-    this.halted = false;
-    this.paused = true;
-    this.Terminal = ["Welcome to Z16 Simulator"];
-  }
-  clock(frequencyHz: number, callback: (state: 0 | 1) => void): () => void {
-    let state: 0 | 1 = 1;
-    const halfPeriodMs = 1000 / (2 * frequencyHz);
-
-    const intervalId = setInterval(() => {
-      // Reverse the state
-      state = state === 0 ? 1 : 0;
-      // Execute instruction positive edge detector
-      if (state === 0 && !this.paused) this.ExecuteInstruction(this.PC);
-      // Refresh UI
-      callback(state);
-      if (this.PC >= this.words.length || this.halted) {
-        clearInterval(intervalId);
-        return;
-      }
-    }, halfPeriodMs);
-    // Return a function to stop the clock
-    return () => clearInterval(intervalId);
   }
   //Getters
   getAssembly(this: cpu): string[] {
@@ -71,16 +36,9 @@ export class cpu {
   getRegisters(this: cpu) {
     return this.registers;
   }
-  getInterruptVector(this: cpu) {
-    return this.interruptVector;
-  }
-  getProgramCode(this: cpu) {
-    return this.programCode;
-  }
   getMMIO(this: cpu) {
     return this.MMIO;
   }
-  //Setters
 
   setPC(this: cpu, value: number) {
     this.PC = value;
@@ -88,24 +46,24 @@ export class cpu {
   resetPC(this: cpu) {
     this.PC = 0;
   }
-  incrementPC(this: cpu): void {
+  incrementPC(this: cpu) {
     this.PC++;
   }
-
-  ExecuteInstruction(this: cpu, address: number): void {
-    if (address < 0 || address >= this.words.length) {
-      console.error("Index out of bounds");
-      return;
+  Execute(this: cpu): boolean {
+    if (this.PC < 0 || this.PC >= this.words.length || this.halted) {
+      return false;
     }
-
+    this.ExecuteInstruction(this.PC);
+    return true;
+  }
+  ExecuteInstruction(this: cpu, address: number): void {
     const instruction = this.words[address];
-
-    const operation = instruction[0];
+    const operation = instruction[0].name;
     switch (operation) {
       // R-Type Instructions
       case "ADD": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) +
             binaryToDecimal(this.registers[rs], true),
@@ -114,8 +72,8 @@ export class cpu {
         break;
       }
       case "SUB": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) -
             binaryToDecimal(this.registers[rs], true),
@@ -124,8 +82,8 @@ export class cpu {
         break;
       }
       case "SLT": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) <
             binaryToDecimal(this.registers[rs], true)
@@ -136,8 +94,8 @@ export class cpu {
         break;
       }
       case "SLTU": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], false) <
             binaryToDecimal(this.registers[rs], false)
@@ -148,8 +106,8 @@ export class cpu {
         break;
       }
       case "SLL": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) <<
             (binaryToDecimal(this.registers[rs], true) & 15),
@@ -158,8 +116,8 @@ export class cpu {
         break;
       }
       case "SRL": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) >>>
             (binaryToDecimal(this.registers[rs], true) & 15),
@@ -168,8 +126,8 @@ export class cpu {
         break;
       }
       case "SRA": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         const shiftamt = binaryToDecimal(this.registers[rs], true) & 0xf;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) >> shiftamt,
@@ -178,8 +136,8 @@ export class cpu {
         break;
       }
       case "OR": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) |
             binaryToDecimal(this.registers[rs], true),
@@ -188,8 +146,8 @@ export class cpu {
         break;
       }
       case "AND": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) &
             binaryToDecimal(this.registers[rs], true),
@@ -198,8 +156,8 @@ export class cpu {
         break;
       }
       case "XOR": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) ^
             binaryToDecimal(this.registers[rs], true),
@@ -208,8 +166,8 @@ export class cpu {
         break;
       }
       case "MV": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rs], true),
           16
@@ -217,21 +175,21 @@ export class cpu {
         break;
       }
       case "JR": {
-        const rd = binaryToDecimal(instruction[1], false);
+        const rd = instruction[1].UnsignedValue;
         this.setPC(binaryToDecimal(this.registers[rd], false));
         return;
       }
       case "JALR": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const rs = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const rs = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(this.getPC() + 1, 16);
         this.setPC(binaryToDecimal(this.registers[rs], false));
         return;
       }
       // I-Type Instructions
       case "ADDI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) + imm,
           16
@@ -239,8 +197,8 @@ export class cpu {
         break;
       }
       case "SLTI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) < imm ? 1 : 0,
           16
@@ -248,8 +206,8 @@ export class cpu {
         break;
       }
       case "SLTUI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], false) < imm ? 1 : 0,
           16
@@ -257,8 +215,8 @@ export class cpu {
         break;
       }
       case "SLLI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) << imm,
           16
@@ -266,8 +224,8 @@ export class cpu {
         break;
       }
       case "SRLI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) >>> imm,
           16
@@ -275,8 +233,8 @@ export class cpu {
         break;
       }
       case "SRAI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], false);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) >> imm,
           16
@@ -284,8 +242,8 @@ export class cpu {
         break;
       }
       case "ORI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) | imm,
           16
@@ -293,8 +251,8 @@ export class cpu {
         break;
       }
       case "ANDI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) & imm,
           16
@@ -302,8 +260,8 @@ export class cpu {
         break;
       }
       case "XORI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(this.registers[rd], true) ^ imm,
           16
@@ -311,21 +269,20 @@ export class cpu {
         break;
       }
       case "LI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(imm, 16);
         break;
       }
       // J-Type Instructions
       case "J": {
-        const offset = binaryToDecimal(instruction[1], true) / 2;
+        const offset = instruction[1].SignedValue / 2;
         this.setPC(this.getPC() + offset);
         return;
       }
       case "JAL": {
-        const offset = binaryToDecimal(instruction[2], true) / 2;
-        console.log("JAL offset:", offset);
-        const rd = binaryToDecimal(instruction[1], false);
+        const offset = instruction[2].SignedValue / 2;
+        const rd = instruction[1].UnsignedValue;
         this.registers[rd] = decimalToBinary(this.getPC() + 1, 16);
         this.setPC(this.getPC() + offset);
         return;
@@ -333,15 +290,14 @@ export class cpu {
       // Sys-call
       case "ECALL": {
         // Handle system call
-        console.log("System call encountered.");
-        const syscallCode = binaryToDecimal(instruction[1], false);
+        const syscallCode = instruction[1].UnsignedValue;
         this.handleSyscall(syscallCode);
         break;
       }
       case "BEQ": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const rs2 = binaryToDecimal(instruction[2], false);
-        const offset = binaryToDecimal(instruction[3], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const rs2 = instruction[2].UnsignedValue;
+        const offset = instruction[3].SignedValue / 2;
         if (
           binaryToDecimal(this.registers[rs1], true) ==
           binaryToDecimal(this.registers[rs2], true)
@@ -350,9 +306,9 @@ export class cpu {
         return;
       }
       case "BNE": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const rs2 = binaryToDecimal(instruction[2], false);
-        const offset = binaryToDecimal(instruction[3], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const rs2 = instruction[2].UnsignedValue;
+        const offset = instruction[3].SignedValue / 2;
         if (
           binaryToDecimal(this.registers[rs1], true) !=
           binaryToDecimal(this.registers[rs2], true)
@@ -361,39 +317,46 @@ export class cpu {
         return;
       }
       case "BZ": {
-        console.log("BZ instruction executed");
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const offset = instruction[2].SignedValue / 2;
         if (binaryToDecimal(this.registers[rs1], true) == 0)
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
         return;
       }
       case "BLT": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const rs2 = binaryToDecimal(instruction[2], false);
-        const offset = binaryToDecimal(instruction[3], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const rs2 = instruction[2].UnsignedValue;
+        const offset = instruction[3].SignedValue / 2;
         if (
           binaryToDecimal(this.registers[rs1], true) <
           binaryToDecimal(this.registers[rs2], true)
-        )
+        ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          // TODO
+          return;
+        } else {
+          break;
+        }
       }
       case "BGE": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const rs2 = binaryToDecimal(instruction[2], false);
-        const offset = binaryToDecimal(instruction[3], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const rs2 = instruction[2].UnsignedValue;
+        const offset = instruction[3].SignedValue / 2;
         if (
           binaryToDecimal(this.registers[rs1], true) >=
           binaryToDecimal(this.registers[rs2], true)
-        )
+        ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          // TODO
+          return;
+        } else {
+          break;
+        }
       }
       case "BLTU": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const rs2 = binaryToDecimal(instruction[2], false);
-        const offset = binaryToDecimal(instruction[3], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const rs2 = instruction[2].UnsignedValue;
+        const offset = instruction[3].SignedValue / 2;
         if (
           binaryToDecimal(this.registers[rs1], false) <
           binaryToDecimal(this.registers[rs2], false)
@@ -402,9 +365,9 @@ export class cpu {
         return;
       }
       case "BGEU": {
-        const rs1 = binaryToDecimal(instruction[1], false);
-        const rs2 = binaryToDecimal(instruction[2], false);
-        const offset = binaryToDecimal(instruction[3], true) / 2;
+        const rs1 = instruction[1].UnsignedValue;
+        const rs2 = instruction[2].UnsignedValue;
+        const offset = instruction[3].SignedValue / 2;
         if (
           binaryToDecimal(this.registers[rs1], false) >=
           binaryToDecimal(this.registers[rs2], false)
@@ -414,25 +377,26 @@ export class cpu {
       }
       // TODO : FIXXXXXX
       case "SB": {
-        const rs2 = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true);
-        const rs1 = binaryToDecimal(instruction[3], false);
+        const rs2 = instruction[1].UnsignedValue;
+        const offset = instruction[2].SignedValue;
+        const rs1 = instruction[3].UnsignedValue;
         this.memory[binaryToDecimal(this.registers[rs1], false) + offset] =
-          this.registers[rs2].slice(0, 8);
+          this.registers[rs2].slice(-8);
+
         break;
       }
       case "SW": {
-        const rs2 = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true);
-        const rs1 = binaryToDecimal(instruction[3], false);
+        const rs2 = instruction[1].UnsignedValue;
+        const offset = instruction[2].SignedValue;
+        const rs1 = instruction[3].UnsignedValue;
         this.memory[binaryToDecimal(this.registers[rs1], false) + offset] =
           this.registers[rs2];
         break;
       }
       case "LB": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true);
-        const rs2 = binaryToDecimal(instruction[3], false);
+        const rd = instruction[1].UnsignedValue;
+        const offset = instruction[2].SignedValue;
+        const rs2 = instruction[3].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(
             this.memory[binaryToDecimal(this.registers[rs2], false) + offset],
@@ -443,9 +407,9 @@ export class cpu {
         break;
       }
       case "LW": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true);
-        const rs2 = binaryToDecimal(instruction[3], false);
+        const rd = instruction[1].UnsignedValue;
+        const offset = instruction[2].SignedValue;
+        const rs2 = instruction[3].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(
             this.memory[binaryToDecimal(this.registers[rs2], false) + offset] +
@@ -459,9 +423,9 @@ export class cpu {
         break;
       }
       case "LBU": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const offset = binaryToDecimal(instruction[2], true);
-        const rs2 = binaryToDecimal(instruction[3], false);
+        const rd = instruction[1].UnsignedValue;
+        const offset = instruction[2].UnsignedValue;
+        const rs2 = instruction[3].UnsignedValue;
         this.registers[rd] = decimalToBinary(
           binaryToDecimal(
             this.memory[binaryToDecimal(this.registers[rs2], false) + offset],
@@ -472,22 +436,26 @@ export class cpu {
         break;
       }
       case "LUI": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary(imm << 7, 16);
         break;
       }
       case "AUIPC": {
-        const rd = binaryToDecimal(instruction[1], false);
-        const imm = binaryToDecimal(instruction[2], true);
+        const rd = instruction[1].UnsignedValue;
+        const imm = instruction[2].SignedValue;
         this.registers[rd] = decimalToBinary((imm << 7) + this.getPC(), 16);
         break;
       }
       default:
-        console.error(`Unknown instruction: ${instruction}`);
+        break;
     }
+    // Increment the Program Counter
     this.incrementPC();
     return;
+  }
+  getWords(this: cpu): Token[][] {
+    return this.words;
   }
   handleSyscall(this: cpu, syscallCode: number): void {
     switch (syscallCode) {
@@ -501,8 +469,17 @@ export class cpu {
       case 3: // Write
         // Implement write functionality if needed
         break;
+      case 7:
+        const keycode = this.registers[6];
+        const char = String.fromCharCode(binaryToDecimal(keycode, false));
+        this.registers[7] = this.PressedKeys[char]
+          ? "0000000000000001" // Key is pressed
+          : "0000000000000000"; // Key is not pressed
+        break;
       case 8: // Print registers
         this.Terminal.push("Registers: " + this.registers.join(", "));
+        break;
+      case 9: // Print memory
         break;
       case 10:
         // Exit the program
@@ -510,16 +487,11 @@ export class cpu {
         this.halted = true;
         break;
       default:
-        console.error(`Unknown syscall code: ${syscallCode}`);
+        // console.error(`Unknown syscall code: ${syscallCode}`);
+        break;
     }
   }
-  getTerminal(this: cpu): string[] {
-    return this.Terminal;
-  }
-  getHalted(this: cpu): boolean {
-    return this.halted;
-  }
-  getPaused(this: cpu): boolean {
-    return this.paused;
+  Handlekey(this: cpu, PressedKeys: Record<string, boolean>) {
+    this.PressedKeys = PressedKeys;
   }
 }
