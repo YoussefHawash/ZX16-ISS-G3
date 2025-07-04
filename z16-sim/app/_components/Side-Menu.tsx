@@ -16,11 +16,18 @@ import Screen from "./screen";
 const standardNames = ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"];
 const abiNames = ["t0", "ra", "sp", "s0", "s1", "t1", "a0", "a1"];
 
+type LastChange = {
+  register: string;
+  index: number;
+  prevValue: string;
+  newValue: string;
+} | null;
+
 export function Registers() {
   const { registers } = useComputer();
   const [useABI, setUseABI] = useState(false);
   const [system, setSystem] = useState("HexaDecimal");
-  const [lastChange, setLastChange] = useState(null);
+  const [lastChange, setLastChange] = useState<LastChange>(null);
   const prevRegistersRef = useRef(registers);
   const currentNames = useABI ? abiNames : standardNames;
 
@@ -42,7 +49,7 @@ export function Registers() {
     prevRegistersRef.current = registers;
   }, [registers, currentNames]);
 
-  const formatValue = (byte, sys) => {
+  const formatValue = (byte: string, sys: string) => {
     if (!byte) return "0x00";
     switch (sys) {
       case "HexaDecimal":
@@ -144,21 +151,21 @@ export function Registers() {
 
 function Memory() {
   const { memory } = useComputer();
-  const [system, setSystem] = useState<string>("HexaDeciaml");
+  const [system, setSystem] = useState<string>("HexaDecimal");
 
   return (
     <div className="flex flex-col p-4 h-full items-center">
       <Select
-        defaultValue="HexaDeciaml"
+        defaultValue="HexaDecimal"
         onValueChange={(value) => setSystem(value)}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="HexaDeciaml" />
+          <SelectValue placeholder="HexaDecimal" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="HexaDeciaml">HexaDeciaml</SelectItem>
+          <SelectItem value="HexaDecimal">Hexadecimal</SelectItem>
           <SelectItem value="Binary">Binary</SelectItem>
-          <SelectItem value="Deciaml">Deciaml</SelectItem>
+          <SelectItem value="Decimal">Decimal</SelectItem>
         </SelectContent>
       </Select>
 
@@ -173,7 +180,7 @@ function Memory() {
                 {`0x${(index + 0xf000).toString(16).toUpperCase()}`}
               </span>
               <span key={index}>
-                {system === "HexaDeciaml"
+                {system === "HexaDecimal"
                   ? parseInt(byte, 2)
                       .toString(16)
                       .toUpperCase()
@@ -191,20 +198,20 @@ function Memory() {
 }
 
 export function Convertor() {
-  const [system, setSystem] = useState<string>("HexaDeciaml");
+  const [system, setSystem] = useState<string>("HexaDecimal");
   return (
     <div className="flex flex-col p-4 h-full">
       <Select
-        defaultValue="HexaDeciaml"
+        defaultValue="HexaDecimal"
         onValueChange={(value) => setSystem(value)}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="HexaDeciaml" />
+          <SelectValue placeholder="HexaDecimal" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="HexaDeciaml">HexaDeciaml</SelectItem>
+          <SelectItem value="HexaDecimal">Hexadecimal</SelectItem>
           <SelectItem value="Binary">Binary</SelectItem>
-          <SelectItem value="Deciaml">Deciaml</SelectItem>
+          <SelectItem value="Decimal">Decimal</SelectItem>
         </SelectContent>
       </Select>
 
