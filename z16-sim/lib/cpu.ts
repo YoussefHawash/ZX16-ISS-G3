@@ -301,9 +301,12 @@ export class cpu {
         if (
           binaryToDecimal(this.registers[rs1], true) ==
           binaryToDecimal(this.registers[rs2], true)
-        )
+        ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          return;
+        } else {
+          break;
+        }
       }
       case "BNE": {
         const rs1 = instruction[1].UnsignedValue;
@@ -312,16 +315,22 @@ export class cpu {
         if (
           binaryToDecimal(this.registers[rs1], true) !=
           binaryToDecimal(this.registers[rs2], true)
-        )
+        ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          return;
+        } else {
+          break;
+        }
       }
       case "BZ": {
         const rs1 = instruction[1].UnsignedValue;
         const offset = instruction[2].SignedValue / 2;
-        if (binaryToDecimal(this.registers[rs1], true) == 0)
+        if (binaryToDecimal(this.registers[rs1], true) == 0) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          return;
+        } else {
+          break;
+        }
       }
       case "BLT": {
         const rs1 = instruction[1].UnsignedValue;
@@ -332,7 +341,6 @@ export class cpu {
           binaryToDecimal(this.registers[rs2], true)
         ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-          // TODO
           return;
         } else {
           break;
@@ -347,7 +355,6 @@ export class cpu {
           binaryToDecimal(this.registers[rs2], true)
         ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-          // TODO
           return;
         } else {
           break;
@@ -360,9 +367,12 @@ export class cpu {
         if (
           binaryToDecimal(this.registers[rs1], false) <
           binaryToDecimal(this.registers[rs2], false)
-        )
+        ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          return;
+        } else {
+          break;
+        }
       }
       case "BGEU": {
         const rs1 = instruction[1].UnsignedValue;
@@ -371,11 +381,13 @@ export class cpu {
         if (
           binaryToDecimal(this.registers[rs1], false) >=
           binaryToDecimal(this.registers[rs2], false)
-        )
+        ) {
           this.setPC(this.getPC() + offset); // Jump to the address specified by imm}
-        return;
+          return;
+        } else {
+          break;
+        }
       }
-      // TODO : FIXXXXXX
       case "SB": {
         const rs2 = instruction[1].UnsignedValue;
         const offset = instruction[2].SignedValue;
