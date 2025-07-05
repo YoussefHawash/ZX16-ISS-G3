@@ -21,7 +21,6 @@ onmessage = (e: MessageEvent<MsgToWorker>) => {
       sim = new cpu(e.data.payload);
       postMessage({ type: "loadMemory", assembly: sim.getAssembly() });
       break;
-
     case "start":
       if (!sim) {
         postMessage({ type: "log", text: "Error: no memory loaded" });
@@ -33,7 +32,6 @@ onmessage = (e: MessageEvent<MsgToWorker>) => {
         runLoop();
       }
       break;
-
     case "stop":
       if (sim) {
         running = false;
@@ -79,9 +77,10 @@ async function runLoop() {
     sim.Handlekey(PressedKeys);
 
     // Update display based on frequency
-    if (freqHz <= 45) {
+    if (freqHz <= 40) {
       postSimulationState();
     } else {
+      freqHz = 100;
       ScreenRefresh();
     }
 

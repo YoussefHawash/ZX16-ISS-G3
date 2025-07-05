@@ -8,9 +8,7 @@ import {
 } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { useComputer } from "@/lib/Context/ComputerContext";
-import { ArrowRight } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import Screen from "./screen";
 // RISC-V register naming conventions
 
 const standardNames = ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"];
@@ -228,7 +226,6 @@ export default function SideMenu() {
     { label: "Registers", content: <Registers /> },
     { label: "Convertor", content: <Convertor /> },
     { label: "Memory", content: <Memory /> },
-    { label: "Screen", content: <Screen memory={screenmemory} /> },
   ];
   return <Tabs className="h-[100%] w-full" tabs={tabData} />;
 }

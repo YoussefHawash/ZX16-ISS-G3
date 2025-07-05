@@ -394,7 +394,6 @@ export class cpu {
         const rs1 = instruction[3].UnsignedValue;
         this.memory[binaryToDecimal(this.registers[rs1], false) + offset] =
           this.registers[rs2].slice(-8);
-
         break;
       }
       case "SW": {
