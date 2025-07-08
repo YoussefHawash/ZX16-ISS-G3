@@ -151,6 +151,11 @@ pongScreen:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
+stateUP1: 
+        .byte 0         # State for player 1: if 1 then player 1 is moving up, else if -1 then player 1 is moving down
+stateUP2: 
+        .byte 0         # State for player 2: if 1 then player 2 is moving up, else if -1 then player 2 is moving down
+
 .org 0x0000
 j newGame
 
@@ -170,16 +175,54 @@ selectPlayers:
         ecall 7
         beq a0, t0, two_player_mode
         j selectPlayers # If neither '1' nor '2' was pressed, loop again
-exit:
-        ecall 10
 
 one_player_mode:
-        j exit
+        j gameLoop
+
 two_player_mode:
         la a0, pongScreen
         call drawScreen
 
-        j exit
+gameLoop:
+        call handleInput
+        #call movePadels
+        j gameLoop
+gameExit:
+        ecall 10
+
+handleInput:
+        li16 a0, 'w' # ASCII code for 'w'
+        ecall 7
+        li t0, 1
+        beq a0, t0, jumpMUP # Branch to "jump move up" if 'w' was pressed
+        li16 a0, 'W' # ASCII code for 'w'
+        ecall 7
+        beq a0, t0, jumpMUP # Branch to "jump move up" if 'W' was pressed
+
+        j notJumpMUP # If 'w' or 'W' was not pressed, continue to check for 's'
+        jumpMUP:
+        li s0, 1 # Set stateUP1 to 1 (moving up)
+        la t0, stateUP1
+        sb s0, 0(t0) # Store the state in memory
+        ret
+        notJumpMUP:
+
+        li16 a0, 's' # ASCII code for 's'
+        ecall 7
+        beq a0, t0, jumpMDOWN # Branch to "jump move down" if 's' was pressed
+        li16 a0, 'S' # ASCII code for 'S'
+        ecall 7
+        beq a0, t0, jumpMDOWN # Branch to "jump move down" if 'S' was pressed
+        ret
+
+        jumpMDOWN:
+        li s0, -1 # Set stateUP1 to -1 (moving down)
+        la t0, stateUP1
+        sb s0, 0(t0) # Store the state in memory
+        ret
+        
+movePadels:
+        
 
 # This function is used to draw the tile map to the screen.
 # It takes the address (a0) of the tile map in a0 and draws it to the tile_map
