@@ -189,15 +189,9 @@ one_player_mode:
 two_player_mode:
         la a0, pongScreen
         call drawScreen
-
-gameLoop:
-        call handleInput 
-        call movePadel1
-        call movePadel2
-        call moveBall
+        
         j gameLoop
-gameExit:
-        ecall 10
+
 
 # This function is used to draw the tile map to the screen.
 # It takes the address (a0) of the tile map in a0 and draws it to the tile_map
@@ -274,7 +268,17 @@ handleInput:
         la t0, stateUP2
         sb s0, 0(t0) # Store the state in the memory
         ret
-        
+
+gameLoop:
+        call handleInput 
+        call movePadel1
+        call movePadel2
+        call borderHorizontalCheck 
+        call moveBall
+        j gameLoop
+gameExit:
+        ecall 10
+
 # This function is used to check the current state desired by player 1.
 # It checks if player 1 wants to move up or down and calls the appropriate function.   
 movePadel1:
@@ -575,4 +579,49 @@ moveBallTop_Right:
         li s1, 0 # Load a black tile at the old position of the ball
         sb s1, 0(t1) # Load the tile map
 moveBallTop_RightExit:
+        ret
+
+borderHorizontalCheck:
+        la t0, ballPosition
+        lw s0, 0(t0) # Load the current position of the ball
+        li t1, 19
+        bge t1, s0, bounceFromTop # If the position is greater than 19, exit
+        j checkBottomBorder
+bounceFromTop:
+        la t0, ballState
+        lb s1, 0(t0) # Load the current state of the ball
+        li t1, 3 # Approaching with direction top-right
+        beq s1, t1, changeBallDirectionBottomRight
+        j changeBallDirectionBottomLeft
+changeBallDirectionBottomRight:
+        li s1, 1 # Change the ball state to bottom-right
+        la t0, ballState
+        sb s1, 0(t0) # Store the new state in memory
+        ret
+changeBallDirectionBottomLeft:
+        li s1, 0 # Change the ball state to bottom-left
+        la t0, ballState
+        sb s1, 0(t0) # Store the new state in memory
+        ret
+checkBottomBorder:
+        la t0, ballPosition
+        lw s0, 0(t0) # Load the current position of the ball
+        li16 t1, 280
+        bge s0, t1, bounceFromBottom # If the position is less than 299, jump
+        ret
+bounceFromBottom:
+        la t0, ballState
+        lb s1, 0(t0) # Load the current state of the ball
+        li t1, 1 # Approaching with direction bottom-right
+        beq s1, t1, changeBallDirectionTopRight
+        j changeBallDirectionTopLeft
+changeBallDirectionTopRight:
+        li s1, 3 # Change the ball state to top-right
+        la t0, ballState
+        sb s1, 0(t0) # Store the new state in memory
+        ret
+changeBallDirectionTopLeft:
+        li s1, 2 # Change the ball state to top-left
+        la t0, ballState
+        sb s1, 0(t0) # Store the new state in memory
         ret
