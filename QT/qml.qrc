@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>qml/Main.qml</file>
-        <file>qml/Editor.qml</file>
-        <file>qml/SideMenu.qml</file>
-    </qresource>
-</RCC>
