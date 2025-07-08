@@ -155,6 +155,10 @@ stateUP1:
         .byte 0         # State for player 1: if 1 then player 1 is moving up, else if -1 then player 1 is moving down
 stateUP2: 
         .byte 0         # State for player 2: if 1 then player 2 is moving up, else if -1 then player 2 is moving down
+p1Position:
+        .word 120       # Initial position for player 1
+p2Position:
+        .word 139       # Initial position for player 2
 
 .org 0x0000
 j newGame
@@ -185,7 +189,7 @@ two_player_mode:
 
 gameLoop:
         call handleInput
-        #call movePadels
+        call movePadels
         j gameLoop
 gameExit:
         ecall 10
@@ -222,7 +226,76 @@ handleInput:
         ret
         
 movePadels:
-        
+        la t0, stateUP1
+        lb s0, 0(t0) # Load the current state of player 1
+        li t1, 1 # Constant for moving up
+        beq s0, t1, jumpMUP1 # If player 1 is moving up, branch to "jump to move up for player 1"
+        li t1, -1 # Constant for moving down
+
+        j notJumpMUP1
+        jumpMUP1:
+        j moveUp1 # Jump to "move up for player 1"
+        notJumpMUP1:
+
+        beq s0, t1, jumpMDOWN1 # If player 1 is moving down, branch to "jump to move down for player 1"
+        ret
+
+        jumpMDOWN1:
+        j moveDown1 # Jump to "move down for player 1"
+
+moveUp1:
+        la t0, p1Position
+        lw s0, 0(t0) # Load the current position of player 1
+        li16 t1, 0
+        bge t1, s0, jumpMoveUp1Exit # If the position is less than 0, exit
+        j afterJumpMoveUp1Exit # Jump to exit
+
+        jumpMoveUp1Exit:
+        j moveUp1Exit # Jump to exit
+        afterJumpMoveUp1Exit:
+
+        addi s0, -20 # Move the top of player 1s padel up by 20 pixels
+        sw s0, 0(t0) # Update the position of player 1
+        la t1, tile_map
+        add t1, s0
+        li s1, 1 # Load a white tile at the start of the padel for player 1
+        sb s1, 0(t1) # Load the tile map
+
+        addi s0, 60 # Delete the bottom of player 1s padel that is positioned under the top of the padel by 60 pixels
+        la t1, tile_map
+        add t1, s0
+        li s1, 0 # Load a black tile at the end of the padel for player 1
+        sb s1, 0(t1) # Load the tile map
+moveUp1Exit:
+        ret
+
+moveDown1:
+        la t0, p1Position
+        lw s0, 0(t0) # Load the current position of player 1
+        li16 t1, 240
+        bge s0, t1, jumpMoveDown1Exit # If the position is greater than 240, exit
+        j afterJumpMoveDown1Exit # Jump to exit
+
+        jumpMoveDown1Exit:
+        j moveDown1Exit # Jump to exit
+        afterJumpMoveDown1Exit:
+
+        addi s0, 20 # Move the top of player 1s padel down by 20 pixels
+        sw s0, 0(t0) # Update the position of player 1
+        addi s0, 40
+        la t1, tile_map
+        add t1, s0
+        li s1, 1 # Load a white tile at the end of the padel for player 1
+        sb s1, 0(t1) # Load the tile map
+
+        addi s0, -60 # Delete the top of player 1s padel that is positioned above the end of the padel by 60 pixels
+        la t1, tile_map
+        add t1, s0
+        li s1, 0 # Load a black tile at the start of the padel for player 1
+        sb s1, 0(t1) # Load the tile map
+moveDown1Exit:
+        ret
+
 
 # This function is used to draw the tile map to the screen.
 # It takes the address (a0) of the tile map in a0 and draws it to the tile_map
