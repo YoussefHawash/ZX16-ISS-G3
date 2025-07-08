@@ -162,6 +162,8 @@ ballState:
         .byte 0        # State for the ball: if 0 then the ball is moving bottom-left, if 1 ball is moving bottom-right, if 2 ball is moving top-left, and if 3 ball is moving top-right
 ballPosition:
         .word 48        # Initial position for the ball
+nextBallPosition:
+        .word 48        # Next position for the ball
 
 .org 0x0000
 j newGame
@@ -488,6 +490,10 @@ moveBallBottom_Left:
 
         addi s0, 19 # Move the ball down by 19 pixels
         sw s0, 0(t0) # Update the position of the ball
+        mv s1, s0
+        addi s1, 19 # The next position of the ball is 19 pixels after the current position
+        la t1, nextBallPosition
+        sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
         li s1, 2 # Load a red tile for the ball
@@ -516,6 +522,10 @@ moveBallBottom_Right:
 
         addi s0, 21 # Move the ball down by 21 pixels
         sw s0, 0(t0) # Update the position of the ball
+        mv s1, s0
+        addi s1, 21 # The next position of the ball is 21 pixels after the current position
+        la t1, nextBallPosition
+        sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
         li s1, 2 # Load a red tile for the ball
@@ -544,6 +554,10 @@ moveBallTop_Left:
 
         addi s0, -21 # Move the ball up by 21 pixels
         sw s0, 0(t0) # Update the position of the ball
+        mv s1, s0
+        addi s1, -21 # The next position of the ball is 21 pixels before the current position
+        la t1, nextBallPosition
+        sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
         li s1, 2 # Load a red tile for the ball
@@ -572,6 +586,10 @@ moveBallTop_Right:
 
         addi s0, -19 # Move the ball up by 19 pixels
         sw s0, 0(t0) # Update the position of the ball
+        mv s1, s0 
+        addi s1, -19 # The next position of the ball is 19 pixels before the current position
+        la t1, nextBallPosition
+        sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
         li s1, 2 # Load a red tile for the ball
@@ -638,7 +656,7 @@ bounceFromBottom:
         ret
 
 collisionCheck:
-        la t0, ballPosition
+        la t0, nextBallPosition
         lw s0, 0(t0) # Load the current position of the ball
         la t1, p1Position
         lw s1, 0(t1) # Load the current position of player 1
@@ -660,7 +678,7 @@ collisionWithP1:
         j changeBallDirectionBottomRight
 
         checkP2Collision:
-        la t0, ballPosition
+        la t0, nextBallPosition
         lw s0, 0(t0) # Load the current position of the ball
         la t1, p2Position
         lw s1, 0(t1) # Load the current position of player 2
@@ -670,7 +688,7 @@ collisionWithP1:
         addi s1, 20
         beq s0, s1, collisionWithP2
         ret
-        
+
 collisionWithP2:
         la t0, ballState
         lb s1, 0(t0) # Load the current state of the ball
