@@ -3,11 +3,11 @@ tile_map:
 
         .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0
-        .byte 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0
-        .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0
-        .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0
-        .byte 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0
+        .byte 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0
+        .byte 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0
+        .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0
+        .byte 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0
+        .byte 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0
         .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0
@@ -16,7 +16,6 @@ tile_map:
         .byte 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-
 
 .org 0xF200
 tile_def:
@@ -159,6 +158,8 @@ p1Position:
         .word 120       # Initial position for player 1
 p2Position:
         .word 139       # Initial position for player 2
+ballState:
+        .byte 0        # State for the ball: if 0 then the ball is moving bottom-left, if 1 ball is moving bottom-right, if 2 ball is moving top-left, and if 3 ball is moving top-right
 ballPosition:
         .word 48        # Initial position for the ball
 
@@ -190,12 +191,28 @@ two_player_mode:
         call drawScreen
 
 gameLoop:
-        call handleInput
+        call handleInput 
         call movePadel1
         call movePadel2
+        call moveBall
         j gameLoop
 gameExit:
         ecall 10
+
+# This function is used to draw the tile map to the screen.
+# It takes the address (a0) of the tile map in a0 and draws it to the tile_map
+drawScreen:
+        la t0, tile_map
+        li s0, 0
+        li16 t1, 300
+loop:   bge s0, t1, drawScreenExit
+        lb s1, 0(a0)
+        sb s1, 0(t0)
+        addi t0, 1
+        addi a0, 1
+        addi s0, 1
+        j loop
+drawScreenExit:   ret
 
 handleInput:
         li16 a0, 'w' # ASCII code for 'w'
@@ -258,7 +275,6 @@ handleInput:
         sb s0, 0(t0) # Store the state in the memory
         ret
         
-
 # This function is used to check the current state desired by player 1.
 # It checks if player 1 wants to move up or down and calls the appropriate function.   
 movePadel1:
@@ -384,8 +400,6 @@ moveUp2:
 moveUp2Exit:
         ret
 
-
-
 # This function is used to move player 2s padel down.
 # It checks the current position of player 2 and updates it accordingly.
 moveDown2:
@@ -415,102 +429,54 @@ moveDown2:
 moveDown2Exit:
         ret
 
-# This function is used to move the ball up and to the right.
-# It checks the current position of the ball and updates it accordingly.
-moveBallUp_Right:
-        la t0, ballPosition
-        lw s0, 0(t0) # Load the current position of the ball
-        li16 t1, 0
-        bge t1, s0, jumpMoveBallUp_RightExit # If the position is less than 0, exit
-        j afterJumpMoveBallUp_RightExit # Jump to exit
+# This function is used to move the ball based on its current state.
+# It checks the current state of the ball and calls the appropriate function to move it.
+moveBall:
+        la t0, ballState
+        lb s0, 0(t0)    # Load current ball state
+        li t1, 0        # Constant for moving bottom-left
+        beq s0, t1, jumpMBBL   # If the ball is moving bottom-left, branch to moveBallBottom_Left
+        li t1, 1        # Constant for moving bottom-right
 
-        jumpMoveBallUp_RightExit:
-        j moveBallUp_RightExit # Jump to exit
-        afterJumpMoveBallUp_RightExit:
+        j notJumpMBBL # If the ball is not moving bottom-left, jump to notJumpMBBL
+        jumpMBBL:
+        j moveBallBottom_Left
+        notJumpMBBL:
 
-        addi s0, -19 # Move the ball up by 19 pixels
-        sw s0, 0(t0) # Update the position of the ball
-        la t1, tile_map
-        add t1, s0
-        li s1, 2 # Load a red tile for the ball
-        sb s1, 0(t1) # Load the tile map
+        beq s0, t1, jumpMBBR  # If ball is moving bottom-right, branch to moveBallBottom_Right
+        li t1, 2        # Constant for moving top-left
+        
+        j notJumpMBBR # If ball is not moving bottom-right, jump to notJumpMBBR
+        jumpMBBR:
+        j moveBallBottom_Right
+        notJumpMBBR:
 
-        addi s0, 19 # Delete the the ball that is positioned 19 pixels after the new position of the ball
-        la t1, tile_map
-        add t1, s0
-        li s1, 0 # Load a black tile at the old position of the ball
-        sb s1, 0(t1) # Load the tile map
-moveBallUp_RightExit:
+        beq s0, t1, jumpMBTL     # If ball is moving top-left, branch to moveBallTop_Left
+        li t1, 3        # Constant for moving top-right
+
+        j notJumpMBTL # If ball is not moving top-left, jump to notJumpMBTL
+        jumpMBTL:
+        j moveBallTop_Left
+        notJumpMBTL:
+
+        beq s0, t1, jumpMBTR    # If ball is moving top-right, branch to moveBallTop_Right
         ret
-
-# This function is used to move the ball up and to the left.
-# It checks the current position of the ball and updates it accordingly.
-moveBallup_Left:
-        la t0, ballPosition
-        lw s0, 0(t0) # Load the current position of the ball
-        li16 t1, 0
-        bge t1, s0, jumpMoveBallUp_LeftExit # If the position is less than 0, exit
-        j afterJumpMoveBallUp_LeftExit # Jump to exit
-
-        jumpMoveBallUp_LeftExit:
-        j moveBallUp_LeftExit # Jump to exit
-        afterJumpMoveBallUp_LeftExit:
-
-        addi s0, -21 # Move the ball up by 21 pixels
-        sw s0, 0(t0) # Update the position of the ball
-        la t1, tile_map
-        add t1, s0
-        li s1, 2 # Load a red tile for the ball
-        sb s1, 0(t1) # Load the tile map
-
-        addi s0, 21 # Delete the the ball that is positioned 21 pixels after the new position of the ball
-        la t1, tile_map
-        add t1, s0
-        li s1, 0 # Load a black tile at the old position of the ball
-        sb s1, 0(t1) # Load the tile map
-moveBallUp_LeftExit:
-        ret
-
-# This function is used to move the ball down and to the right.
-# It checks the current position of the ball and updates it accordingly.
-moveBallDown_Right:
-        la t0, ballPosition
-        lw s0, 0(t0) # Load the current position of the ball
-        li16 t1, 299
-        bge s0, t1, jumpMoveBallDown_RightExit # If the position is greater than 299, exit
-        j afterJumpMoveBallDown_RightExit # Jump to exit
-
-        jumpMoveBallDown_RightExit:
-        j moveBallDown_RightExit # Jump to exit
-        afterJumpMoveBall_RightDownExit:
-
-        addi s0, 21 # Move the ball down by 21 pixels
-        sw s0, 0(t0) # Update the position of the ball
-        la t1, tile_map
-        add t1, s0
-        li s1, 2 # Load a red tile for the ball
-        sb s1, 0(t1) # Load the tile map
-
-        addi s0, -21 # Delete the the ball that is positioned 21 pixels before the new position of the ball
-        la t1, tile_map
-        add t1, s0
-        li s1, 0 # Load a black tile at the old position of the ball
-        sb s1, 0(t1) # Load the tile map
-moveBallDown_RightExit:
-        ret    
+        
+        jumpMBTR:
+        j moveBallTop_Right
 
 # This function is used to move the ball down and to the left.
 # It checks the current position of the ball and updates it accordingly.
-moveBallDown_Left:
+moveBallBottom_Left:
         la t0, ballPosition
         lw s0, 0(t0) # Load the current position of the ball
         li16 t1, 280
-        bge s0, t1, jumpMoveBallDown_LeftExit # If the position is greater than 280, exit
-        j afterJumpMoveBallDown_LeftExit # Jump to exit
+        bge s0, t1, jumpMoveBallBottom_LeftExit # If the position is greater than 280, exit
+        j afterJumpMoveBallBottom_LeftExit # Jump to exit
 
-        jumpMoveBallDown_LeftExit:
-        j moveBallDown_LeftExit # Jump to exit
-        afterJumpMoveBallDown_LeftExit:
+        jumpMoveBallBottom_LeftExit:
+        j moveBallBottom_LeftExit # Jump to exit
+        afterJumpMoveBallBottom_LeftExit:
 
         addi s0, 19 # Move the ball down by 19 pixels
         sw s0, 0(t0) # Update the position of the ball
@@ -524,18 +490,89 @@ moveBallDown_Left:
         add t1, s0
         li s1, 0 # Load a black tile at the old position of the ball
         sb s1, 0(t1) # Load the tile map
+moveBallBottom_LeftExit:
+        ret
 
-# This function is used to draw the tile map to the screen.
-# It takes the address (a0) of the tile map in a0 and draws it to the tile_map
-drawScreen:
-        la t0, tile_map
-        li s0, 0
-        li16 t1, 300
-loop:   bge s0, t1, drawScreenExit
-        lb s1, 0(a0)
-        sb s1, 0(t0)
-        addi t0, 1
-        addi a0, 1
-        addi s0, 1
-        j loop
-drawScreenExit:   ret
+# This function is used to move the ball down and to the right.
+# It checks the current position of the ball and updates it accordingly.
+moveBallBottom_Right:
+        la t0, ballPosition
+        lw s0, 0(t0) # Load the current position of the ball
+        li16 t1, 299
+        bge s0, t1, jumpMoveBallBottom_RightExit # If the position is greater than 299, exit
+        j afterJumpMoveBallBottom_RightExit # Jump to exit
+
+        jumpMoveBallBottom_RightExit:
+        j moveBallBottom_RightExit # Jump to exit
+        afterJumpMoveBallBottom_RightExit:
+
+        addi s0, 21 # Move the ball down by 21 pixels
+        sw s0, 0(t0) # Update the position of the ball
+        la t1, tile_map
+        add t1, s0
+        li s1, 2 # Load a red tile for the ball
+        sb s1, 0(t1) # Load the tile map
+
+        addi s0, -21 # Delete the the ball that is positioned 21 pixels before the new position of the ball
+        la t1, tile_map
+        add t1, s0
+        li s1, 0 # Load a black tile at the old position of the ball
+        sb s1, 0(t1) # Load the tile map
+moveBallBottom_RightExit:
+        ret
+
+# This function is used to move the ball up and to the left.
+# It checks the current position of the ball and updates it accordingly.
+moveBallTop_Left:
+        la t0, ballPosition
+        lw s0, 0(t0) # Load the current position of the ball
+        li16 t1, 0
+        bge t1, s0, jumpMoveBallTop_LeftExit # If the position is less than 0, exit
+        j afterJumpMoveBallTop_LeftExit # Jump to exit
+
+        jumpMoveBallTop_LeftExit:
+        j moveBallTop_LeftExit # Jump to exit
+        afterJumpMoveBallTop_LeftExit:
+
+        addi s0, -21 # Move the ball up by 21 pixels
+        sw s0, 0(t0) # Update the position of the ball
+        la t1, tile_map
+        add t1, s0
+        li s1, 2 # Load a red tile for the ball
+        sb s1, 0(t1) # Load the tile map
+
+        addi s0, 21 # Delete the the ball that is positioned 21 pixels after the new position of the ball
+        la t1, tile_map
+        add t1, s0
+        li s1, 0 # Load a black tile at the old position of the ball
+        sb s1, 0(t1) # Load the tile map
+moveBallTop_LeftExit:
+        ret
+
+# This function is used to move the ball up and to the right.
+# It checks the current position of the ball and updates it accordingly.
+moveBallTop_Right:
+        la t0, ballPosition
+        lw s0, 0(t0) # Load the current position of the ball
+        li16 t1, 0
+        bge t1, s0, jumpMoveBallTop_RightExit # If the position is less than 0, exit
+        j afterJumpMoveBallTop_RightExit # Jump to exit
+
+        jumpMoveBallTop_RightExit:
+        j moveBallTop_RightExit # Jump to exit
+        afterJumpMoveBallTop_RightExit:
+
+        addi s0, -19 # Move the ball up by 19 pixels
+        sw s0, 0(t0) # Update the position of the ball
+        la t1, tile_map
+        add t1, s0
+        li s1, 2 # Load a red tile for the ball
+        sb s1, 0(t1) # Load the tile map
+
+        addi s0, 19 # Delete the the ball that is positioned 19 pixels after the new position of the ball
+        la t1, tile_map
+        add t1, s0
+        li s1, 0 # Load a black tile at the old position of the ball
+        sb s1, 0(t1) # Load the tile map
+moveBallTop_RightExit:
+        ret
