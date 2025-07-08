@@ -191,7 +191,7 @@ gameLoop:
         call handleInput
         call movePadel1
         call handleInput
-        call movePadel1
+        call movePadel2
         j gameLoop
 gameExit:
         ecall 10
@@ -219,7 +219,6 @@ handleInput:
         li16 a0, 'S' # ASCII code for 'S'
         ecall 7
         beq a0, t0, jumpMDOWN1 # Branch to "jump move down for player 1" if 'S' was pressed
-        ret
 
         j notJumpMDOWN1 # If 's' or 'S' was not pressed
         jumpMDOWN1:
@@ -231,7 +230,6 @@ handleInput:
 
         li16 a0, 'o' # ASCII code for 'o'
         ecall 7
-        li t0, 1
         beq a0, t0, jumpMUP2 # Branch to "jump move up for player 2" if 'o' was pressed
         li16 a0, 'O' # ASCII code for 'O'
         ecall 7
@@ -351,8 +349,8 @@ movePadel2:
 moveUp2:
         la t0, p2Position
         lw s0, 0(t0) # Load the current position of player 2
-        li16 t1, 9
-        bge t1, s0, jumpMoveUp_P2Exit # If the position is less than 9, exit
+        li16 t1, 19
+        bge t1, s0, jumpMoveUp_P2Exit # If the position is less than 19, exit
         j afterJumpMoveUp_P2Exit # Jump to exit
 
         jumpMoveUp_P2Exit:
@@ -377,8 +375,8 @@ moveUp2Exit:
 moveDown2:
         la t0, p2Position
         lw s0, 0(t0) # Load the current position of player 2
-        li16 t1, 249
-        bge s0, t1, jumpMoveDown_P2Exit # If the position is greater than 249, exit
+        li16 t1, 259
+        bge s0, t1, jumpMoveDown_P2Exit # If the position is greater than 259, exit
         j afterJumpMoveDown_P2Exit # Jump to exit
 
         jumpMoveDown_P2Exit:
@@ -389,7 +387,6 @@ moveDown2:
         sw s0, 0(t0) # Update the position of player 2
         addi s0, 40
         la t1, tile_map
-        addi t1, 19 # Move to the second column (player 2's paddle)
         add t1, s0
         li s1, 1 # Load a white tile at the end of the padel for player 2
         sb s1, 0(t1) # Load the tile map
