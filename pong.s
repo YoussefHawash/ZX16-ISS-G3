@@ -1,21 +1,21 @@
 .org 0xF000
 tile_map:
 
+        .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0
+        .byte 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0
+        .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0
+        .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0
+        .byte 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0
+        .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0
+        .byte 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0
+        .byte 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0
+        .byte 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-        .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-        .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 
 
 .org 0xF200
@@ -118,22 +118,22 @@ blackScreen:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-titleScreen:
+selectScreen:
+        .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
-        .byte 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+        .byte 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0
+        .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0
+        .byte 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0
+        .byte 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0
+        .byte 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0
+        .byte 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0
+        .byte 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0
+        .byte 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0
+        .byte 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0
-        .byte 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0
-        .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0
-        .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0
-        .byte 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 pongScreen:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -167,7 +167,7 @@ j newGame
 newGame:
         la a0, blackScreen
         call drawScreen
-        la a0, titleScreen
+        la a0, selectScreen
         call drawScreen
 
 selectPlayers:
@@ -190,7 +190,8 @@ two_player_mode:
 gameLoop:
         call handleInput
         call movePadel1
-        call movePadel2
+        call handleInput
+        call movePadel1
         j gameLoop
 gameExit:
         ecall 10
@@ -199,10 +200,10 @@ handleInput:
         li16 a0, 'w' # ASCII code for 'w'
         ecall 7
         li t0, 1
-        beq a0, t0, jumpMUP1 # Branch to "jump move up" if 'w' was pressed
+        beq a0, t0, jumpMUP1 # Branch to "jump move up for player 1" if 'w' was pressed
         li16 a0, 'W' # ASCII code for 'w'
         ecall 7
-        beq a0, t0, jumpMUP1 # Branch to "jump move up" if 'W' was pressed
+        beq a0, t0, jumpMUP1 # Branch to "jump move up for player 1" if 'W' was pressed
 
         j notJumpMUP1 # If 'w' or 'W' was not pressed
         jumpMUP1:
@@ -214,10 +215,10 @@ handleInput:
 
         li16 a0, 's' # ASCII code for 's'
         ecall 7
-        beq a0, t0, jumpMDOWN1 # Branch to "jump move down" if 's' was pressed
+        beq a0, t0, jumpMDOWN1 # Branch to "jump move down for player 1" if 's' was pressed
         li16 a0, 'S' # ASCII code for 'S'
         ecall 7
-        beq a0, t0, jumpMDOWN1 # Branch to "jump move down" if 'S' was pressed
+        beq a0, t0, jumpMDOWN1 # Branch to "jump move down for player 1" if 'S' was pressed
         ret
 
         j notJumpMDOWN1 # If 's' or 'S' was not pressed
@@ -231,10 +232,10 @@ handleInput:
         li16 a0, 'o' # ASCII code for 'o'
         ecall 7
         li t0, 1
-        beq a0, t0, jumpMUP2 # Branch to "jump move up" if 'o' was pressed
+        beq a0, t0, jumpMUP2 # Branch to "jump move up for player 2" if 'o' was pressed
         li16 a0, 'O' # ASCII code for 'O'
         ecall 7
-        beq a0, t0, jumpMUP2 # Branch to "jump move up" if 'O' was pressed
+        beq a0, t0, jumpMUP2 # Branch to "jump move up for player 2" if 'O' was pressed
 
         j notJumpMUP2 # If 'o' or 'O' was not pressed
         jumpMUP2:
@@ -246,10 +247,10 @@ handleInput:
 
         li16 a0, 'l' # ASCII code for 'l'
         ecall 7
-        beq a0, t0, jumpMDOWN2 # Branch to "jump move down" if 'l' was pressed
+        beq a0, t0, jumpMDOWN2 # Branch to "jump move down for player 2" if 'l' was pressed
         li16 a0, 'L' # ASCII code for 'L'
         ecall 7
-        beq a0, t0, jumpMDOWN2 # Branch to "jump move down" if 'L' was pressed
+        beq a0, t0, jumpMDOWN2 # Branch to "jump move down for player 2" if 'L' was pressed
         ret
 
         jumpMDOWN2:
@@ -262,7 +263,7 @@ movePadel1:
         la t0, stateUP1
         lb s0, 0(t0) # Load the current state of player 1
         li t1, 1 # Constant for moving up
-        beq s0, t1, jumpMUP_P1 # If player 1 is moving up, branch to "jump to move up for player 1"
+        beq s0, t1, jumpMUP_P1 # If player 1 is moving up, branch to the intermediate "jump to move up for player 1"
         li t1, -1 # Constant for moving down
 
         j notJumpMUP_P1
@@ -270,7 +271,7 @@ movePadel1:
         j moveUp1 # Jump to "move up for player 1"
         notJumpMUP_P1:
 
-        beq s0, t1, jumpMDOWN_P1 # If player 1 is moving down, branch to "jump to move down for player 1"
+        beq s0, t1, jumpMDOWN_P1 # If player 1 is moving down, branch to the intermediate "jump to move down for player 1"
         ret
 
         jumpMDOWN_P1:
@@ -333,7 +334,7 @@ movePadel2:
         la t0, stateUP2
         lb s0, 0(t0) # Load the current state of player 2
         li t1, 1 # Constant for moving up
-        beq s0, t1, jumpMUP_P2 # If player 2 is moving up, branch to "jump to move up for player 2"
+        beq s0, t1, jumpMUP_P2 # If player 2 is moving up, branch to the intermediate "jump to move up for player 2"
         li t1, -1 # Constant for moving down
 
         j notJumpMUP_P2
@@ -341,7 +342,7 @@ movePadel2:
         j moveUp2 # Jump to "move up for player 2"
         notJumpMUP_P2:
 
-        beq s0, t1, jumpMDOWN_P2 # If player 2 is moving down, branch to "jump to move down for player 2"
+        beq s0, t1, jumpMDOWN_P2 # If player 2 is moving down, branch to the intermediate "jump to move down for player 2"
         ret
 
         jumpMDOWN_P2:
