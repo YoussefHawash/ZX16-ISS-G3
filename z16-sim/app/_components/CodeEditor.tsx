@@ -14,22 +14,11 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
 
-export default function CodeEditor({
-  handleStart,
-  handleStop,
-  handleStep,
-  handleFreqChange,
-}: {
-  handleStart: () => void;
-  handleStop: () => void;
-  handleStep: () => void;
-  handleFreqChange: () => void;
-}) {
-  const { pc, assembly, frequency, setPc, running, setFrequency } =
-    useComputer();
-  useEffect(() => {
-    if (frequency > 30) setPc(0); // Reset PC to 1 if frequency is above 30
-  }, [frequency]);
+export default function CodeEditor({}: {}) {
+  const { assembly } = useComputer();
+  // useEffect(() => {
+  //   if (frequency > 30) setPc(0); // Reset PC to 1 if frequency is above 30
+  // }, [frequency]);
   const editorRef = useRef<ReturnType<Monaco["editor"]["create"]> | null>(null);
   const decorationsRef = useRef<string[]>([]);
 
@@ -106,36 +95,36 @@ export default function CodeEditor({
   }
 
   // Update highlighted line when highlightLine prop changes
-  useEffect(() => {
-    if (editorRef.current && pc !== undefined) {
-      // Clear previous decorations
-      decorationsRef.current = editorRef.current.deltaDecorations(
-        decorationsRef.current,
-        []
-      );
+  // useEffect(() => {
+  //   if (editorRef.current && pc !== undefined) {
+  //     // Clear previous decorations
+  //     decorationsRef.current = editorRef.current.deltaDecorations(
+  //       decorationsRef.current,
+  //       []
+  //     );
 
-      // Add new decoration for the highlighted line
-      if (pc > 0 && pc <= assembly.length) {
-        decorationsRef.current = editorRef.current.deltaDecorations(
-          decorationsRef.current,
-          [
-            {
-              range: {
-                startLineNumber: pc,
-                startColumn: 1,
-                endLineNumber: pc,
-                endColumn: 1000, // Make sure it covers the whole line
-              },
-              options: {
-                isWholeLine: true,
-                className: "myLineHighlight",
-              },
-            },
-          ]
-        );
-      }
-    }
-  }, [pc, assembly.length]);
+  //     // Add new decoration for the highlighted line
+  //     if (pc > 0 && pc <= assembly.length) {
+  //       decorationsRef.current = editorRef.current.deltaDecorations(
+  //         decorationsRef.current,
+  //         [
+  //           {
+  //             range: {
+  //               startLineNumber: pc,
+  //               startColumn: 1,
+  //               endLineNumber: pc,
+  //               endColumn: 1000, // Make sure it covers the whole line
+  //             },
+  //             options: {
+  //               isWholeLine: true,
+  //               className: "myLineHighlight",
+  //             },
+  //           },
+  //         ]
+  //       );
+  //     }
+  //   }
+  // }, [pc, assembly.length]);
 
   useEffect(() => {
     if (editorRef.current && assembly.length > 0) {
@@ -171,8 +160,8 @@ export default function CodeEditor({
           lineNumbersMinChars: 0,
         }}
       />
-      <div className="flex justify-between items-center px-2 bg-neutral-900 border-t-1 border-neutral-800 ">
-        <div className="flex items-center gap-2">
+      {/* <div className="flex justify-between items-center px-2 bg-neutral-900 border-t-1 border-neutral-800 "> */}
+      {/* <div className="flex items-center gap-2">
           <Button
             className="hover:cursor-pointer hover:text-green-500 "
             variant={"link"}
@@ -211,7 +200,7 @@ export default function CodeEditor({
             Frequency: {frequency > 45 ? "Unlimited" : frequency + " Hz"}
           </span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

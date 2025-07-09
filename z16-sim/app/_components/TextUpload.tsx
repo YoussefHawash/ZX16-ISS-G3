@@ -1,22 +1,19 @@
 "use client";
-
-import { Button } from "@/components/ui/button";
 import { useComputer } from "@/lib/Context/ComputerContext";
-
+import parseInstructionZ16 from "@/lib/disassembler";
+import { cpu } from "../../lib/cpu";
+import { memoryStore } from "../../lib/memoryStore";
+const core = cpu.getInstance();
 export default function TextUpload() {
-  const { setMemory } = useComputer();
+  const { setAssembly } = useComputer();
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       const buffer = e.target?.result as ArrayBuffer;
-      const bytes = new Uint8Array(buffer);
-      // Convert each byte to an 8-character binary string
-      const binaryStr = Array.from(bytes).map((byte) =>
-        byte.toString(2).padStart(8, "0")
-      );
-      setMemory(binaryStr);
+      memoryStore.writeBlock(0, buffer);
+      setAssembly(core.Disassemble());
     };
     reader.readAsArrayBuffer(file);
   };

@@ -1,34 +1,33 @@
 import { services, Token } from "./Definitions";
-import { binaryToDecimal, binToHex, littleEndianParser } from "./utils";
-
-import instructionFormatsByType from "@/public/z16-INST.json";
+import { binaryToHex, getSignedValue, littleEndianParser } from "./utils";
+import { instructionFormats } from "./z16-INST";
 
 let assembly: string[] = [];
-let words: Token[][] = [];
+let lines: Token[][] = [];
 
-export function instructionFormat(Type: string, ...args: string[]): string {
+export function instructionFormat(Type: string, ...args: number[]): string {
   let entry: any;
   switch (Type) {
     case "R": {
       const [funct3, funct4] = args;
-      entry = Object.entries(instructionFormatsByType[Type]).find(
+      entry = Object.entries(instructionFormats[Type]).find(
         ([, fmt]) => fmt.funct3 === funct3 && fmt.funct4 === funct4
       );
       break;
     }
     case "I": {
       const [imm7, funct3] = args;
-      entry = Object.entries(instructionFormatsByType.I).find(
+      entry = Object.entries(instructionFormats.I).find(
         ([, fmt]) => fmt.funct3 === funct3
       );
-      if (funct3 === "011") {
+      if (funct3 === 0b011) {
         entry = [];
         entry[0] =
-          imm7.slice(0, 3) === "001"
+          ((imm7 >> 4) & 0x07) === 0b001
             ? "SLLI"
-            : imm7.slice(0, 3) === "010"
+            : ((imm7 >> 4) & 0x07) === 0b010
             ? "SRLI"
-            : imm7.slice(0, 3) === "100"
+            : ((imm7 >> 4) & 0x07) === 0b100
             ? "SRAI"
             : undefined;
       }
@@ -36,244 +35,291 @@ export function instructionFormat(Type: string, ...args: string[]): string {
     }
     case "B": {
       const [funct3] = args;
-      entry = Object.entries(instructionFormatsByType.B).find(
+      entry = Object.entries(instructionFormats.B).find(
         ([, fmt]) => fmt.funct3 === funct3
       );
       break;
     }
     case "S": {
       const [funct3] = args;
-      entry = Object.entries(instructionFormatsByType.S).find(
+      entry = Object.entries(instructionFormats.S).find(
         ([, fmt]) => fmt.funct3 === funct3
       );
       break;
     }
     case "L": {
       const [funct3] = args;
-      entry = Object.entries(instructionFormatsByType.L).find(
+      entry = Object.entries(instructionFormats.L).find(
         ([, fmt]) => fmt.funct3 === funct3
       );
       break;
     }
     case "J": {
       const [f] = args;
-      entry = Object.entries(instructionFormatsByType.J).find(
+      entry = Object.entries(instructionFormats.J).find(
         ([, fmt]) => fmt.flag === f
       );
       break;
     }
     case "U": {
       const [f] = args;
-      entry = Object.entries(instructionFormatsByType.U).find(
+      entry = Object.entries(instructionFormats.U).find(
         ([, fmt]) => fmt.flag === f
       );
       break;
     }
     case "SYS": {
       const [funct3] = args;
-      entry = Object.entries(instructionFormatsByType.SYS).find(
+      entry = Object.entries(instructionFormats.SYS).find(
         ([, fmt]) => fmt.funct3 === funct3
       );
       break;
     }
   }
-  return entry && entry[0] ? entry[0] : "UNKNOWN";
+  return entry && entry[0] ? entry[0] : "";
 }
 
 // Main disassembly function
 export default function parseInstructionZ16(
-  raw: string[]
+  raw: Uint8Array
 ): [string[], Token[][]] {
-  raw = littleEndianParser(raw); // Parsing to construct list of instructions
+  const words = littleEndianParser(raw); // Parsing to construct list of instructions
 
-  for (let i = 0; i < raw.length; i++) {
-    const instr = raw[i];
-    const opcode = instr.slice(13, 16); // bits[15:13] is opcode
+  for (let i = 0; i < words.length; i++) {
+    const current_instr = words[i];
+    const opcode = current_instr & 0x07; // bits[15:13] is opcode
     switch (opcode) {
       // ───────────── R-Type  ─────────────
-      case "000": {
-        const funct4 = instr.slice(0, 4); // bits[15:12]
-        const RS2 = instr.slice(4, 7); // bits[11:9] is RS2
-        const RD = instr.slice(7, 10); // bits[8:6] is RD/RS1
-        const funct3 = instr.slice(10, 13); // bits[12:10]
+      case 0: {
+        const funct4 = (current_instr >> 12) & 0x0f;
+        const RS2 = (current_instr >> 9) & 0x07;
+        const RD = (current_instr >> 6) & 0x07;
+        const funct3 = (current_instr >> 3) & 0x07;
         // map to the actual instruction name
         const name = instructionFormat("R", funct3, funct4);
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
 
         // JR/JALR: only uses RD as target
         if (name === "JR") {
-          assembly.push(`JR  ${binToHex(RD, true)}`);
-          words.push([new Token("Inst", name), new Token("Reg", RD)]);
+          assembly.push(`JR  ${binaryToHex(RD, 3).slice(1)}`);
+          lines.push([new Token("Inst", name), new Token("Reg", "", RD)]);
         } else {
           assembly.push(
-            `${name} ${binToHex(RD, true)}, ${binToHex(RS2, true)}`
+            `${name} ${binaryToHex(RD, 3).slice(1)}, ${binaryToHex(
+              RS2,
+              3
+            ).slice(1)}`
           );
-          words.push([
+          lines.push([
             new Token("Inst", name),
-            new Token("Reg", RD),
-            new Token("Reg", RS2),
+            new Token("Reg", "", RD),
+            new Token("Reg", "", RS2),
           ]);
         }
         continue;
       }
       // ───────────── I-Type ─────────────
-      case "001": {
-        const imm7 = instr.slice(0, 7); // bits[15:9]
-        const RD = instr.slice(7, 10); // bits[8:6] is RS2
-        const funct3 = instr.slice(10, 13); // bits[5:3] is RS1
-        const name = instructionFormat("I", imm7, funct3) as string;
-
+      case 1: {
+        const imm7 = (current_instr >> 9) & 0x7f; // bits[15:9]
+        const RD = (current_instr >> 6) & 0x07; // bits[8:6]
+        const funct3 = (current_instr >> 3) & 0x07; // bits[5:3] is RS1
+        const name = instructionFormat("I", imm7, funct3);
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
         // formatting
-        if (["SLLI", "SRLI", "SRAI"].includes(name)) {
+        if (funct3 === 0b011) {
           assembly.push(
-            `${name} ${binToHex(RD, true)}, ${binToHex(
-              imm7.slice(3, 7),
-              false
+            `${name} ${binaryToHex(RD, 3).slice(1)}, ${binaryToHex(
+              imm7 & 0x0f,
+              4
             )}`
           );
-          words.push([
+          lines.push([
             new Token("Inst", name),
-            new Token("Reg", RD),
-            new Token("Imm", imm7.slice(3, 7)),
+            new Token("Reg", "", RD),
+            new Token("Imm", "", imm7 & 0x0f, 4),
           ]);
         } else {
           assembly.push(
-            `${name} ${binToHex(RD, true)}, ${binToHex(imm7, false)}`
+            `${name} ${binaryToHex(RD, 3).slice(1)}, ${binaryToHex(imm7, 7)}`
           );
-          words.push([
+          lines.push([
             new Token("Inst", name),
-            new Token("Reg", RD),
-            new Token("Imm", imm7),
+            new Token("Reg", "", RD),
+            new Token("Imm", "", imm7, 7),
           ]);
         }
         continue;
       }
       // ───────────── B-Type ─────────────
-      case "010": {
-        const imm4_1 = instr.slice(0, 4) + "0"; // bits[15:12]
-        const offset = binaryToDecimal(imm4_1, true); // bits[11:9] is imm4_1, add 0 for Z16
-        const RS2 = instr.slice(4, 7); // bits[11:9] is RS2
-        const RS1 = instr.slice(7, 10); // bits[8:6] is RS1
-        const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
+      case 2: {
+        const imm4_1 = (current_instr >> 12) & 0x0f; // bits[15:12]
+        const offset = getSignedValue(current_instr, 4) * 2; // bits[11:9] is imm4_1, add 0 for Z16
+        const RS2 = (current_instr >> 9) & 0x07; // bits[11:9] is RS2
+        const RS1 = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
+        const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
         const name = instructionFormat("B", funct3);
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
         if (["BZ", "BNZ"].includes(name)) {
-          assembly.push(`${name} ${binToHex(RS1, true)}, ${offset}`);
-          words.push([
+          assembly.push(`${name} ${binaryToHex(RS1, 3).slice(1)}, ${offset}`);
+          lines.push([
             new Token("Inst", name),
-            new Token("Reg", RS1),
-            new Token("Imm", imm4_1),
+            new Token("Reg", "", RS1),
+            new Token("Imm", "", imm4_1, 4),
           ]);
         } else {
           assembly.push(
-            `${name} ${binToHex(RS1, true)}, ${binToHex(RS2, true)}, ${offset}`
+            `${name} ${binaryToHex(RS1, 3).slice(1)}, ${binaryToHex(
+              RS2,
+              3
+            ).slice(1)}, ${offset}`
           );
-          words.push([
+          lines.push([
             new Token("Inst", name),
-            new Token("Reg", RS1),
-            new Token("Reg", RS2),
-            new Token("Imm", imm4_1),
+            new Token("Reg", "", RS1),
+            new Token("Reg", "", RS2),
+            new Token("Imm", "", imm4_1, 4),
           ]);
         }
         continue;
       }
-
       // ───────────── S-Type ─────────────
-      case "011": {
-        const imm3_0 = instr.slice(0, 4); // bits[15:12]
-        const offset = binaryToDecimal(imm3_0, true);
-        const RS2 = instr.slice(4, 7); // bits[11:9] is RS2
-        const RS1 = instr.slice(7, 10); // bits[8:6] is RS1
-        const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
+      case 3: {
+        const imm3_0 = (current_instr >> 12) & 0x0f; // bits[15:12]
+        const offset = getSignedValue(current_instr, 4);
+        const RS2 = (current_instr >> 9) & 0x07; // bits[11:9] is RS2
+        const RS1 = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
+        const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
         const name = instructionFormat("S", funct3);
-
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
         assembly.push(
-          `${name} ${binToHex(RS1, true)}, ${offset}(${binToHex(RS2, true)})`
+          `${name} ${binaryToHex(RS1, 3).slice(1)}, ${offset}(${binaryToHex(
+            RS2,
+            3
+          ).slice(1)})`
         );
-        words.push([
+        lines.push([
           new Token("Inst", name),
-          new Token("Reg", RS1),
-          new Token("Imm", imm3_0),
-          new Token("Reg", RS2),
+          new Token("Reg", "", RS1),
+          new Token("Imm", "", imm3_0, 4),
+          new Token("Reg", "", RS2),
         ]);
         continue;
       }
-
       // ───────────── L-Type  ─────────────
-      case "100": {
-        const imm3_0 = instr.slice(0, 4); // bits[15:12]
-        const offset = binaryToDecimal(imm3_0, true);
-        const RS2 = instr.slice(4, 7); // bits[11:9] is RS2
-        const RD = instr.slice(7, 10); // bits[8:6] is RD
-        const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
+      case 4: {
+        const imm3_0 = (current_instr >> 12) & 0x0f; // bits[15:12]
+        const offset = getSignedValue(current_instr, 4);
+        const RS2 = (current_instr >> 9) & 0x07; // bits[11:9] is RS2
+        const RD = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
+        const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
         const name = instructionFormat("L", funct3);
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
         assembly.push(
-          `${name} ${binToHex(RD, true)}, ${offset}(${binToHex(RS2, true)})`
+          `${name} ${binaryToHex(RD, 3).slice(1)}, ${offset}(${binaryToHex(
+            RS2,
+            3
+          ).slice(1)})`
         );
-        words.push([
+        lines.push([
           new Token("Inst", name),
-          new Token("Reg", RD),
-          new Token("Imm", imm3_0),
-          new Token("Reg", RS2),
+          new Token("Reg", "", RD),
+          new Token("Imm", "", imm3_0, 4),
+          new Token("Reg", "", RS2),
         ]);
         continue;
       }
       // ───────────── J-Type  ─────────────
-      case "101": {
-        const f = instr.charAt(0); // bit15
-        const imm9_4 = instr.slice(1, 7); // bits[14:9]
-        const RD = instr.slice(7, 10); // bits[8:6] is RD
-        const imm3_1 = instr.slice(10, 13); // bits[5:3]
-        const immBits = imm9_4 + imm3_1 + "0";
-        const offset = binaryToDecimal(immBits, true); // Z16 uses 10 bits for J-Type
+      case 5: {
+        const f = (current_instr >> 15) & 0x1; // bit15
+        const imm9_4 = (current_instr >> 9) & 0x03f; // bits[14:9]
+        const RD = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
+        const imm3_1 = (current_instr >> 3) & 0x07; // bits[5:3]
+        const immBits = (imm9_4 << 3) | imm3_1; // Combine imm9_4 and imm3_1
+        const offset = getSignedValue(immBits * 2, 10); // Z16 uses 10 bits for J-Type
 
         const name = instructionFormat("J", f);
-
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
         if (name === "J") {
           assembly.push(`J ${offset}`);
-          words.push([new Token("Inst", name), new Token("Imm", immBits)]);
-        } else {
-          assembly.push(`${name} ${binToHex(RD, true)}, ${offset}`);
-          words.push([
+          lines.push([
             new Token("Inst", name),
-            new Token("Reg", RD),
-            new Token("Imm", immBits),
+            new Token("Imm", "", immBits, 9),
+          ]);
+        } else {
+          assembly.push(`${name} ${binaryToHex(RD, 3).slice(1)}, ${offset}`);
+          lines.push([
+            new Token("Inst", name),
+            new Token("Reg", "", RD),
+            new Token("Imm", "", immBits, 9),
           ]);
         }
         continue;
       }
       // ───────────── U-Type  ─────────────
-      case "110": {
-        const f = instr.charAt(0); // bit15
-        const hi6 = instr.slice(1, 7); // bits[14:9]
-        const RD = instr.slice(7, 10); // bits[8:6] is RD
-        const lo3 = instr.slice(10, 13); // bits[5:3] is lo3
-        const immBits = hi6 + lo3;
+      case 6: {
+        const f = (current_instr >> 15) & 0x1; // bit15
+        const hi6 = (current_instr >> 9) & 0x03f; // bits[14:9]
+        const RD = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
+        const lo3 = (current_instr >> 3) & 0x07; // bits[5:3]
+        //TODO
+        const upperimmediate = (hi6 << 3) | lo3; // Combine hi6 (upper 6 bits) and lo3 (lower 3 bits)
         const name = instructionFormat("U", f);
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
         assembly.push(
-          `${name} ${binToHex(RD, true)}, ${binToHex(immBits, false)}`
+          `${name} ${binaryToHex(RD, 3).slice(1)}, ${binaryToHex(
+            upperimmediate,
+            9
+          )}`
         );
-        words.push([
+        lines.push([
           new Token("Inst", name),
-          new Token("Reg", RD),
-          new Token("Imm", immBits),
+          new Token("Reg", "", RD),
+          new Token("Imm", "", upperimmediate, 9),
         ]);
         continue;
       }
       // ──────────── SYS-Type  ─────────────
-      case "111": {
-        const service = instr.slice(0, 10); // bits[15:6]
-        const funct3 = instr.slice(10, 13); // bits[5:3] is funct3
+      case 7: {
+        const service = (current_instr >> 6) & 0x03ff; // bits[15:6]
+        const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
         const name = instructionFormat("SYS", funct3);
-        const serviceName = services[binaryToDecimal(service, false)];
+        const serviceName = services[service];
+        if (!name) {
+          assembly.push(`UNKNOWN opcode=${opcode}`);
+          continue;
+        }
 
-        assembly.push(
-          `${name} ${binaryToDecimal(service, false)}    # ${serviceName}`
-        );
-        words.push([new Token("Inst", name), new Token("Reg", service)]);
+        assembly.push(`${name} ${service}    # ${serviceName}`);
+        lines.push([
+          new Token("Inst", name),
+          new Token("Reg", "", service, 10),
+        ]);
         continue;
       }
       default:
         assembly.push(`UNKNOWN opcode=${opcode}`);
     }
   }
-  return [assembly, words];
+  return [assembly, lines];
 }
