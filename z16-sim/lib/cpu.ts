@@ -1,34 +1,36 @@
-import { Token } from "./Definitions";
+import { SimulatorState, Token } from "./Types/Definitions";
 import parseInstructionZ16 from "./disassembler";
 import { handleSign } from "./utils";
-export enum SimulatorState {
-  Paused = 0,
-  Running = 1,
-  Halted = 2,
-}
-export class cpu {
+export class CPU {
   private memory: Uint8Array;
+  private initialMemory?: Uint8Array;
   private instructions: Token[][] = [];
   private registers: Uint16Array = new Uint16Array(8);
-  private PC: number = 0; // Program Counter
-  private pressedKeys: Set<string> = new Set();
-  private _state: number = 0;
+  public PC: Uint32Array = new Uint32Array(0); // Program Counter
+  private pressedKeys: Set<number> = new Set();
+  public _state: Uint8Array = new Uint8Array(0);
+  prevState: SimulatorState = SimulatorState.Paused;
 
-  constructor(
-    sharedMemoryBuf: SharedArrayBuffer,
-    sharedRegistersBuf: SharedArrayBuffer,
-    sharedPCBuf: number,
-    sharedStateBuf: number
-  ) {
-    this.memory = new Uint8Array(sharedMemoryBuf);
-    this.registers = new Uint16Array(sharedRegistersBuf);
-    this.PC = sharedPCBuf; // Initialize PC from shared buffer
-    this._state = sharedStateBuf;
-  }
-  load(): void {
-    this.instructions = parseInstructionZ16(this.memory)[1];
+  constructor(buffers: {
+    memory: SharedArrayBuffer;
+    registers: SharedArrayBuffer;
+    state: SharedArrayBuffer;
+    pc: SharedArrayBuffer;
+  }) {
+    this.memory = new Uint8Array(buffers.memory);
+    this.registers = new Uint16Array(buffers.registers);
+    this._state = new Uint8Array(buffers.state);
+    this.PC = new Uint32Array(buffers.pc); // PC is at index 0
   }
   //Getters
+  load(): void {
+    this.initialMemory = new Uint8Array(this.memory); // Store original memory for reset
+    this.instructions = parseInstructionZ16(this.memory)[1];
+  }
+
+  static assemble(memory: Uint8Array): string[] {
+    return parseInstructionZ16(memory)[0];
+  }
 
   pause(): void {
     if (this.state === SimulatorState.Running) {
@@ -36,43 +38,57 @@ export class cpu {
     }
   }
   get pc(): number {
-    return this.PC;
+    return this.PC[0];
   }
+
   get state(): SimulatorState {
-    return this._state;
+    return this._state[0];
   }
 
   set state(value: SimulatorState) {
-    this._state = value;
+    this._state[0] = value;
   }
   set pc(value: number) {
-    this.PC = value;
+    this.PC[0] = value;
   }
-  keyDown(key: string): void {
+  keyDown(key: number): void {
     if (this.pressedKeys.has(key)) return; // Ignore repeated key presses
+    if (key === 0) return; // Ignore key code 0
     this.pressedKeys.add(key);
   }
 
-  keyUp(key: string): void {
+  keyUp(key: number): void {
     this.pressedKeys.delete(key);
   }
   reset(): void {
     this.pc = 0;
     this.registers.fill(0);
+    this.state = SimulatorState.Paused;
+    if (this.initialMemory) {
+      this.memory.set(this.initialMemory); // Reset memory to initial state
+    }
   }
   step(): boolean {
     this.executeInstruction();
-    if (this.state === SimulatorState.Halted) {
+    if (
+      this.state === SimulatorState.Halted ||
+      this.state === SimulatorState.Blocked
+    ) {
       return false; // Step execution ended
     }
     return true;
   }
-  executeInstruction(this: cpu): void {
+
+  executeInstruction(this: CPU): void {
     if (this.pc < 0 || this.pc >= this.instructions.length) {
       this.state = SimulatorState.Halted; // Invalid PC, halt execution
       return;
     }
     const instruction = this.instructions[this.pc];
+    if (!instruction) {
+      this.state = SimulatorState.Halted; // No valid instruction, halt execution
+      return;
+    }
     const operation = instruction[0].name;
     switch (operation) {
       // R-Type Instructions
@@ -148,14 +164,14 @@ export class cpu {
       }
       case "JR": {
         const rd = instruction[1].value;
-        this.pc = this.registers[rd];
+        this.pc = Math.floor(this.registers[rd] / 2);
         return;
       }
       case "JALR": {
         const rd = instruction[1].value;
         const rs = instruction[2].value;
-        this.registers[rd] = this.pc + 1;
-        this.pc = this.registers[rs];
+        this.registers[rd] = this.pc * 2 + 2;
+        this.pc = Math.floor(this.registers[rs] / 2);
         return;
       }
       // I-Type Instructions
@@ -229,7 +245,7 @@ export class cpu {
       case "JAL": {
         const offset = instruction[2].SignedValue;
         const rd = instruction[1].value;
-        this.registers[rd] = this.pc + 1;
+        this.registers[rd] = this.pc * 2 + 2;
         this.pc = this.pc + offset;
         return;
       }
@@ -326,18 +342,17 @@ export class cpu {
         const rs2 = instruction[1].value;
         const offset = instruction[2].SignedValue;
         const rs1 = instruction[3].value;
-        this.memory[this.registers[rs1] + offset] =
-          (this.registers[rs2] >> 8) & 0xff; //
+        this.memory[this.registers[rs1] + offset] = this.registers[rs2] & 0xff;
+
         break;
       }
       case "SW": {
         const rs2 = instruction[1].value;
         const offset = instruction[2].SignedValue;
         const rs1 = instruction[3].value;
-        this.memory[this.registers[rs1] + offset] =
-          (this.registers[rs2] >> 8) & 0xff; //
+        this.memory[this.registers[rs1] + offset] = this.registers[rs2] & 0xff; // low byte first (little-endian)
         this.memory[this.registers[rs1] + offset + 1] =
-          this.registers[rs2] & 0xff;
+          (this.registers[rs2] >> 8) & 0xff; // high byte second (little-endian)
 
         break;
       }
@@ -345,7 +360,10 @@ export class cpu {
         const rd = instruction[1].value;
         const offset = instruction[2].SignedValue;
         const rs2 = instruction[3].value;
-        this.registers[rd] = this.memory[this.registers[rs2] + offset];
+        // Load a byte from memory, sign-extend to 16 bits, and store in register
+        const addr = this.registers[rs2] + offset;
+        const byte = this.memory[addr];
+        this.registers[rd] = byte & 0x80 ? byte | 0xff00 : byte;
         break;
       }
       case "LW": {
@@ -354,7 +372,7 @@ export class cpu {
         const rs2 = instruction[3].value;
         // Load two bytes from memory and combine into a 16-bit value (big-endian)
         const addr = this.registers[rs2] + offset;
-        this.registers[rd] = (this.memory[addr] << 8) | this.memory[addr + 1];
+        this.registers[rd] = this.memory[addr] | (this.memory[addr + 1] << 8);
         break;
       }
       case "LBU": {
@@ -373,8 +391,9 @@ export class cpu {
       }
       case "AUIPC": {
         const rd = instruction[1].value;
-        const imm = instruction[2].SignedValue;
-        this.registers[rd] = (imm << 7) + this.pc;
+        const imm = instruction[2].value;
+        const addr = this.pc * 2; // Add immediate to PC
+        this.registers[rd] = (imm << 7) + addr;
         break;
       }
       default:
@@ -385,7 +404,7 @@ export class cpu {
     return;
   }
 
-  handleSyscall(this: cpu, syscallCode: number): void {
+  handleSyscall(this: CPU, syscallCode: number): void {
     switch (syscallCode) {
       case 0: // Exit
         break;
@@ -395,15 +414,21 @@ export class cpu {
         // Implement read functionality if needed
         break;
       case 3: // Write
-        // Implement write functionality if needed
         break;
       case 7:
+        const keyCode = this.registers[6]; // a0
+        if (this.pressedKeys.has(keyCode)) {
+          this.registers[6] = 1; // Echo back the key code
+        } else {
+          this.registers[6] = 0; // No key pressed
+        }
         break;
       case 8: // Print registers
         break;
       case 9: // Print memory
         break;
       case 10:
+        this.state = SimulatorState.Halted; // Blocked state
         break;
       default:
         // console.error(`Unknown syscall code: ${syscallCode}`);

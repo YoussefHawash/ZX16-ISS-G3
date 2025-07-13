@@ -22,7 +22,7 @@ tile_def:
 
     tile0:  .fill 128, 1, 0x00  # Black Tile
     tile1:  .fill 128, 1, 0x11  # White Tile
-    tile2:  .fill 128, 1, 0x44  # Red Tile
+    tile2: .fill 128, 1, 0x44  # red Tile
     tile3:  .fill 128, 1, 0x55  # Orange Tile
     tile4:  .fill 8, 1, 0x00                                        # Last third of title
             .fill 16, 1, 0x44
@@ -86,7 +86,23 @@ tile_def:
             .byte 0x03, 0x00, 0x03, 0x30, 0x00, 0x03, 0x00, 0x00
             .byte 0x30, 0x00, 0x03, 0x03, 0x00, 0x03, 0x33, 0x00
             .fill 48, 1, 0x00
-    tile10: .space 128
+     tile10: # Ball Tile
+    .byte 0x00, 0x00, 0x00, 0x66, 0x66, 0x00, 0x00, 0x00
+    .byte 0x00, 0x00, 0x66, 0x11, 0x11, 0x66, 0x00, 0x00
+    .byte 0x00, 0x06, 0x11, 0x11, 0x11, 0x11, 0x60, 0x00
+    .byte 0x00, 0x61, 0x11, 0x11, 0x11, 0x11, 0x16, 0x00
+    .byte 0x06, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x60
+    .byte 0x06, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x60
+    .byte 0x61, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x16
+    .byte 0x61, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x16
+    .byte 0x61, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x16
+    .byte 0x61, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x16
+    .byte 0x06, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x60
+    .byte 0x06, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x60
+    .byte 0x00, 0x61, 0x11, 0x11, 0x11, 0x11, 0x16, 0x00
+    .byte 0x00, 0x06, 0x11, 0x11, 0x11, 0x11, 0x60, 0x00
+    .byte 0x00, 0x00, 0x66, 0x11, 0x11, 0x66, 0x00, 0x00
+    .byte 0x00, 0x00, 0x00, 0x66, 0x66, 0x00, 0x00, 0x00
     tile11: .space 128
     tile12: .space 128
     tile13: .space 128
@@ -99,6 +115,7 @@ palette:
 .byte 0x00, 0xFF # Black & White
 .byte 0x0C, 0xFC # Green & Yellow (Points and Score)
 .byte 0xE0, 0xE8 # Red & Orange
+.byte 0x92 # gray(6)
 
 .data
 blackScreen:
@@ -136,7 +153,7 @@ selectScreen:
 pongScreen:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0xA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -496,7 +513,7 @@ moveBallBottom_Left:
         sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
-        li s1, 2 # Load a red tile for the ball
+        li s1, 0xA # Load a red tile for the ball
         sb s1, 0(t1) # Load the tile map
 
         addi s0, -19 # Delete the the ball that is positioned 19 pixels before the new position of the ball
@@ -528,7 +545,7 @@ moveBallBottom_Right:
         sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
-        li s1, 2 # Load a red tile for the ball
+        li s1, 0xA # Load a red tile for the ball
         sb s1, 0(t1) # Load the tile map
 
         addi s0, -21 # Delete the the ball that is positioned 21 pixels before the new position of the ball
@@ -560,7 +577,7 @@ moveBallTop_Left:
         sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
-        li s1, 2 # Load a red tile for the ball
+        li s1, 0xA # Load a red tile for the ball
         sb s1, 0(t1) # Load the tile map
 
         addi s0, 21 # Delete the the ball that is positioned 21 pixels after the new position of the ball
@@ -592,7 +609,7 @@ moveBallTop_Right:
         sw s1, 0(t1) # Update the next position of the ball
         la t1, tile_map
         add t1, s0
-        li s1, 2 # Load a red tile for the ball
+        li s1, 0xA # Load a red tile for the ball
         sb s1, 0(t1) # Load the tile map
 
         addi s0, 19 # Delete the the ball that is positioned 19 pixels after the new position of the ball

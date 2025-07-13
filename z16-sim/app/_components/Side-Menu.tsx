@@ -7,8 +7,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
-import { useComputer } from "@/lib/Context/ComputerContext";
-import React, { useEffect, useRef, useState } from "react";
+import Simulator from "@/hooks/use-cpu";
+import React, { use, useEffect, useRef, useState } from "react";
+import Screen from "./screen";
 // RISC-V register naming conventions
 
 const standardNames = ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"];
@@ -22,42 +23,45 @@ type LastChange = {
 } | null;
 
 export function Registers() {
-  const { registers } = useComputer();
   const [useABI, setUseABI] = useState(false);
   const [system, setSystem] = useState("HexaDecimal");
   const [lastChange, setLastChange] = useState<LastChange>(null);
-  const prevRegistersRef = useRef(registers);
+  const [registerValues, setRegisterValues] = useState<Uint16Array>(
+    new Uint16Array(32)
+  ); // Assuming 32 registers
+  const { buffers } = Simulator();
   const currentNames = useABI ? abiNames : standardNames;
 
-  // Track register changes
+  // Track register changes and trigger re-renders
   useEffect(() => {
-    const prevRegisters = prevRegistersRef.current;
+    let animationId: number;
 
-    registers.forEach((value, idx) => {
-      if (prevRegisters[idx] !== value) {
-        setLastChange({
-          register: currentNames[idx],
-          index: idx,
-          prevValue: prevRegisters[idx],
-          newValue: value,
-        });
+    const update = () => {
+      // Create a new Uint16Array to trigger state update
+      const newRegisters = new Uint16Array(buffers.registers);
+      setRegisterValues(newRegisters);
+      animationId = requestAnimationFrame(update);
+    };
+
+    update();
+
+    // Cleanup
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
       }
-    });
+    };
+  }, [buffers.registers]);
 
-    prevRegistersRef.current = registers;
-  }, [registers, currentNames]);
-
-  const formatValue = (byte: string, sys: string) => {
-    if (!byte) return "0x00";
+  const formatValue = (value: number, sys: string) => {
+    const byte = value.toString(2).padStart(16, "0"); // Convert to 16-bit binary string
     switch (sys) {
       case "HexaDecimal":
-        return (
-          "0x" + parseInt(byte, 2).toString(16).toUpperCase().padStart(2, "0")
-        );
+        return "0x" + value.toString(16).toUpperCase().padStart(4, "0");
       case "Binary":
         return byte;
       case "Decimal":
-        return parseInt(byte, 2).toString(10).padStart(3, " ");
+        return value.toString(10).padStart(5, " ");
       default:
         return byte;
     }
@@ -89,7 +93,7 @@ export function Registers() {
       </div>
 
       {/* Registers Table */}
-      <div className="flex-1 overflow-auto p-4 text-[]">
+      <div className=" overflow-auto p-4">
         <div className="max-w-md mx-auto">
           <div className="bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
             {/* Table Header */}
@@ -106,6 +110,7 @@ export function Registers() {
             <div className="divide-y divide-zinc-800">
               {currentNames.map((name, idx) => {
                 const isChanged = lastChange && lastChange.index === idx;
+                const value = registerValues[idx] || 0;
 
                 return (
                   <div
@@ -123,18 +128,13 @@ export function Registers() {
                       {name}
                     </div>
                     <div
-                      className={`font-mono text-sm text-right transition-all duration-300
-              ${
-                isChanged
-                  ? "text-amber-400 font-semibold scale-105"
-                  : "text-zinc-400"
-              }`}
+                      className={`font-mono text-sm text-right transition-all duration-300 text-zinc-400`}
                       style={{
                         fontFamily:
                           "Consolas, 'Fira Mono', 'Menlo', 'Monaco', 'Liberation Mono', 'Courier New', monospace",
                       }}
                     >
-                      {formatValue(registers[idx], system)}
+                      {formatValue(value, system)}
                     </div>
                   </div>
                 );
@@ -143,12 +143,12 @@ export function Registers() {
           </div>
         </div>
       </div>
+      <Screen />
     </div>
   );
 }
 
 function Memory() {
-  const { memory } = useComputer();
   const [system, setSystem] = useState<string>("HexaDecimal");
 
   return (
@@ -169,7 +169,7 @@ function Memory() {
 
       <div className="mt-4">
         <div className="flex gap-1 flex-wrap">
-          {memory.slice(0xf000, 0xffff).map((byte, index) => (
+          {/* {memory.slice(0xf000, 0xffff).map((byte, index) => (
             <div
               className="flex flex-col p-1 items-center border rounded"
               key={index}
@@ -188,7 +188,7 @@ function Memory() {
                   : parseInt(byte, 2).toString(10)}
               </span>
             </div>
-          ))}
+          ))} */}
         </div>
       </div>
     </div>
@@ -221,7 +221,6 @@ export function Convertor() {
 }
 
 export default function SideMenu() {
-  const { screenmemory } = useComputer();
   const tabData: Tab[] = [
     { label: "Registers", content: <Registers /> },
     { label: "Convertor", content: <Convertor /> },

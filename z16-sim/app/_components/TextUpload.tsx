@@ -1,19 +1,18 @@
 "use client";
-import { useComputer } from "@/lib/Context/ComputerContext";
-import parseInstructionZ16 from "@/lib/disassembler";
-import { cpu } from "../../lib/cpu";
-import { memoryStore } from "../../lib/memoryStore";
-const core = cpu.getInstance();
+
+import Simulator from "@/hooks/use-cpu";
+import { useSharedBuffers } from "@/lib/BufferContext";
+
 export default function TextUpload() {
-  const { setAssembly } = useComputer();
+  const { load } = Simulator();
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       const buffer = e.target?.result as ArrayBuffer;
-      memoryStore.writeBlock(0, buffer);
-      setAssembly(core.Disassemble());
+      if (!buffer) return;
+      load(buffer);
     };
     reader.readAsArrayBuffer(file);
   };

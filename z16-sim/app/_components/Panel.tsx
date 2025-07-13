@@ -6,13 +6,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useComputer } from "@/lib/Context/ComputerContext";
 import React, { useState } from "react";
 function Console() {
   return <div>Welcome to the home page!</div>;
 }
 function MachineCode() {
-  const { memory } = useComputer();
   const [system, setSystem] = useState<string>("HexaDeciaml");
 
   return (
@@ -32,17 +30,7 @@ function MachineCode() {
       </Select>
 
       <div className="mt-4">
-        <div className="flex gap-1 flex-wrap">
-          {memory.slice(0, 0xefff).map((byte, index) => (
-            <span key={index}>
-              {system === "HexaDeciaml"
-                ? parseInt(byte, 2).toString(16).toUpperCase().padStart(2, "0")
-                : system === "Binary"
-                ? byte
-                : parseInt(byte, 2).toString(10)}
-            </span>
-          ))}
-        </div>
+        <div className="flex gap-1 flex-wrap"></div>
       </div>
     </div>
   );

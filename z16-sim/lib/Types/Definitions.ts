@@ -1,17 +1,31 @@
-import { getSignedValue } from "./utils";
+import { getSignedValue } from "../utils";
 
-export const services: { [key: number]: string } = {
-  1: "Read String",
-  2: "Read Integer",
-  3: "Print String",
-  4: "Play tone",
-  5: "Set audio volume",
-  6: "Stop Audio playback",
-  7: "Read the keyboard",
-  8: "Registers Dump",
-  9: "Memory Dump",
-  10: "Program Exit",
+export enum ECALLService {
+  ReadString = 1,
+  ReadInteger = 2,
+  PrintString = 3,
+  PlayTone = 4,
+  SetAudioVolume = 5,
+  StopAudioPlayback = 6,
+  ReadKeyboard = 7,
+  RegistersDump = 8,
+  MemoryDump = 9,
+  ProgramExit = 10,
+}
+export enum SimulatorState {
+  Paused = 0,
+  Running = 1,
+  Halted = 2,
+  Blocked = 3,
+}
+export type Buffers = {
+  memory: SharedArrayBuffer;
+  registers: SharedArrayBuffer;
+  state: SharedArrayBuffer;
+  pc: SharedArrayBuffer;
+  manager: SharedArrayBuffer;
 };
+
 export class Token {
   public type: "Imm" | "Reg" | "Inst"; // Type of the token, can be used for styling
   public name: string = ""; // The name of the token, if applicable

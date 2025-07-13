@@ -30,7 +30,7 @@ export function littleEndianParser(memory: Uint8Array): Uint16Array {
 }
 export function getSignedValue(value: number, width: number): number {
   const mask = 1 << (width - 1);
-  return (value & (mask - 1)) - (value & mask);
+  return value & mask ? (value & (mask - 1)) - (value & mask) : value;
 }
 export function handleSign(
   value: number,

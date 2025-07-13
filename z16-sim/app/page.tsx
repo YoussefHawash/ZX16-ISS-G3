@@ -1,14 +1,17 @@
-"use client";
-
-import CodeEditor from "./_components/CodeEditor";
+import Grid from "./_components/Grid";
 import NavBar from "./_components/NavBar";
-import Simulator from "./_components/screen";
-export default function Home() {
+
+export default function Main() {
   return (
-    <main className="flex flex-col h-screen">
+    <>
       <NavBar />
-      <Simulator />
-      <CodeEditor />
-    </main>
+
+      <main
+        className="flex flex-col bg-[var(--bg)] text-[var(--text)]"
+        style={{ height: "calc(100vh - 56px)" }}
+      >
+        <Grid />
+      </main>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
-import { ComputerProvider } from "@/lib/Context/ComputerContext";
+import { SharedBuffersProvider } from "@/lib/BufferContext";
 import type { Metadata } from "next";
 import { Sora } from "next/font/google";
 import "./globals.css";
@@ -18,13 +18,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sora.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <SharedBuffersProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </SharedBuffersProvider>
       </body>
     </html>
   );

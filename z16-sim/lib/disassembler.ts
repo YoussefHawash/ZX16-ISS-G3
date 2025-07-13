@@ -1,6 +1,6 @@
-import { services, Token } from "./Definitions";
+import { instructionFormats } from "./constants";
+import { ECALLService, Token } from "./Types/Definitions";
 import { binaryToHex, getSignedValue, littleEndianParser } from "./utils";
-import { instructionFormats } from "./z16-INST";
 
 let assembly: string[] = [];
 let lines: Token[][] = [];
@@ -159,7 +159,7 @@ export default function parseInstructionZ16(
       // ───────────── B-Type ─────────────
       case 2: {
         const imm4_1 = (current_instr >> 12) & 0x0f; // bits[15:12]
-        const offset = getSignedValue(current_instr, 4) * 2; // bits[11:9] is imm4_1, add 0 for Z16
+        const offset = getSignedValue(imm4_1, 4) * 2; // bits[11:9] is imm4_1, add 0 for Z16
         const RS2 = (current_instr >> 9) & 0x07; // bits[11:9] is RS2
         const RS1 = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
         const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
@@ -194,7 +194,7 @@ export default function parseInstructionZ16(
       // ───────────── S-Type ─────────────
       case 3: {
         const imm3_0 = (current_instr >> 12) & 0x0f; // bits[15:12]
-        const offset = getSignedValue(current_instr, 4);
+        const offset = getSignedValue(imm3_0, 4);
         const RS2 = (current_instr >> 9) & 0x07; // bits[11:9] is RS2
         const RS1 = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
         const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
@@ -220,7 +220,7 @@ export default function parseInstructionZ16(
       // ───────────── L-Type  ─────────────
       case 4: {
         const imm3_0 = (current_instr >> 12) & 0x0f; // bits[15:12]
-        const offset = getSignedValue(current_instr, 4);
+        const offset = getSignedValue(imm3_0, 4);
         const RS2 = (current_instr >> 9) & 0x07; // bits[11:9] is RS2
         const RD = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
         const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
@@ -250,7 +250,7 @@ export default function parseInstructionZ16(
         const RD = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
         const imm3_1 = (current_instr >> 3) & 0x07; // bits[5:3]
         const immBits = (imm9_4 << 3) | imm3_1; // Combine imm9_4 and imm3_1
-        const offset = getSignedValue(immBits * 2, 10); // Z16 uses 10 bits for J-Type
+        const offset = getSignedValue(immBits, 9) * 2; // Z16 uses 10 bits for J-Type
 
         const name = instructionFormat("J", f);
         if (!name) {
@@ -304,7 +304,7 @@ export default function parseInstructionZ16(
         const service = (current_instr >> 6) & 0x03ff; // bits[15:6]
         const funct3 = (current_instr >> 3) & 0x07; // bits[12:10]
         const name = instructionFormat("SYS", funct3);
-        const serviceName = services[service];
+        const serviceName = ECALLService[service];
         if (!name) {
           assembly.push(`UNKNOWN opcode=${opcode}`);
           continue;
