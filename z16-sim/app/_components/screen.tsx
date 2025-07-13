@@ -66,8 +66,8 @@ const Screen = memo(({ className }: { className?: string }) => {
             const lo = byte & 0x0f,
               hi = (byte >> 4) & 0x0f;
             const offs = (y * 16 + x) * 4;
-            const [r1, g1, b1] = palette[lo];
-            const [r2, g2, b2] = palette[hi];
+            const [r1, g1, b1] = palette[hi];
+            const [r2, g2, b2] = palette[lo];
             data[offs] = r1;
             data[offs + 1] = g1;
             data[offs + 2] = b1;
