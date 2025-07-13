@@ -418,9 +418,9 @@ export class CPU {
       case 7:
         const keyCode = this.registers[6]; // a0
         if (this.pressedKeys.has(keyCode)) {
-          this.registers[6] = 1; // Echo back the key code
+          this.registers[7] = 1; // Echo back the key code
         } else {
-          this.registers[6] = 0; // No key pressed
+          this.registers[7] = 0; // No key pressed
         }
         break;
       case 8: // Print registers

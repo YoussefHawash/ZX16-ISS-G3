@@ -195,8 +195,8 @@ moveUp1:
         add t1, s0
         li s1, 0 # Load a black tile at the end of the padel for player 1
         sb s1, 0(t1) # Load the tile map
-moveUp1Exit:
-        ret
+        moveUp1Exit: ret
+        
 
 # This function is used to move player 1s padel down.
 # It checks the current position of player 1 and updates it accordingly.
@@ -224,8 +224,8 @@ moveDown1:
         add t1, s0
         li s1, 0 # Load a black tile at the start of the padel for player 1
         sb s1, 0(t1) # Load the tile map
-moveDown1Exit:
-        ret
+        moveDown1Exit: ret
+        
 
 # This function is used to check the current state desired by player 2.
 # It checks if player 2 wants to move up or down and calls the appropriate function.
@@ -272,8 +272,7 @@ moveUp2:
         add t1, s0
         li s1, 0 # Load a black tile at the end of the padel for player 2
         sb s1, 0(t1) # Load the tile map
-moveUp2Exit:
-        ret
+        moveUp2Exit: ret
 
 # This function is used to move player 2s padel down.
 # It checks the current position of player 2 and updates it accordingly.
@@ -301,8 +300,7 @@ moveDown2:
         add t1, s0
         li s1, 0 # Load a black tile at the start of the padel for player 2
         sb s1, 0(t1) # Load the tile map
-moveDown2Exit:
-        ret
+        moveDown2Exit: ret
 
 # Game loop is positioned here to handle the limits of the j instruction.
 gameLoop:
@@ -313,8 +311,9 @@ gameLoop:
         call moveBall
         call collisionCheck 
         j gameLoop
-gameExit:
-        ecall 10
+        
+        gameLoopExit:
+        ret
 
 # This function is used to move the ball based on its current state.
 # It checks the current state of the ball and calls the appropriate function to move it.
@@ -373,9 +372,6 @@ drawScreen:
 jumpGameLoop:
         j gameLoop
 
-jumpDrawScreen:
-        j drawScreen
-
 # This function is used to move the ball down and to the left.
 # It checks the current position of the ball and updates it accordingly.
 moveBallBottom_Left:
@@ -405,8 +401,8 @@ moveBallBottom_Left:
         add t1, s0
         li s1, 0 # Load a black tile at the old position of the ball
         sb s1, 0(t1) # Load the tile map
-moveBallBottom_LeftExit:
-        ret
+        
+        moveBallBottom_LeftExit: ret
 
 # This function is used to move the ball down and to the right.
 # It checks the current position of the ball and updates it accordingly.
@@ -437,8 +433,7 @@ moveBallBottom_Right:
         add t1, s0
         li s1, 0 # Load a black tile at the old position of the ball
         sb s1, 0(t1) # Load the tile map
-moveBallBottom_RightExit:
-        ret
+        moveBallBottom_RightExit: ret
 
 # This function is used to move the ball up and to the left.
 # It checks the current position of the ball and updates it accordingly.
@@ -469,8 +464,7 @@ moveBallTop_Left:
         add t1, s0
         li s1, 0 # Load a black tile at the old position of the ball
         sb s1, 0(t1) # Load the tile map
-moveBallTop_LeftExit:
-        ret
+        moveBallTop_LeftExit: ret
 
 # This function is used to move the ball up and to the right.
 # It checks the current position of the ball and updates it accordingly.
@@ -501,8 +495,7 @@ moveBallTop_Right:
         add t1, s0
         li s1, 0 # Load a black tile at the old position of the ball
         sb s1, 0(t1) # Load the tile map
-moveBallTop_RightExit:
-        ret
+        moveBallTop_RightExit: ret
 
 borderHorizontalCheck:
         la t0, ballPosition
@@ -556,6 +549,15 @@ bounceFromBottom:
         sb s1, 0(t0) # Store the new state in memory
         ret
 
+# Intermediate function to jump to the draw screen function.
+# This is used to handle the limits of the j instruction.
+jumpDrawScreen:
+        j drawScreen
+
+# Intermediate function to jump to the game loop exit function.
+jumpGameLoopExit:
+        j gameLoopExit
+
 collisionCheck:
         addi sp, -4
         sw ra, 0(sp) # Save return address
@@ -578,6 +580,10 @@ collisionCheck:
         j collisionWithP1
 
 scoreScreenDraw:
+        addi sp, -4
+        sb s0, 0(sp) # Save s0
+        sb s1, 4(sp) # Save s1
+        
         la t0, tile_map
         li16 s0, 0
         li16 t1, 300
@@ -586,7 +592,8 @@ scoreScreenDraw:
         lb s1, 0(t0) # Load the current tile from the tile map
         blt s0, t1, jumpScreenDrawLoop
         bnz s1, skipDraw # If the current tile is not 0, don't draw the tile
-        scoreScreenDrawExit: ret
+        jumpScoreScreenDrawExit: 
+        j scoreScreenDrawExit # Jump to exit if the tile is not 0
         jumpScreenDrawLoop:
         lb s1, 0(a0)
         sb s1, 0(t0)
@@ -596,10 +603,16 @@ scoreScreenDraw:
                 addi s0, 1
         j scoreLoop
         
-                
+        scoreScreenDrawExit:
+        lb s0, 0(sp) # Restore s0
+        lb s1, 4(sp) # Restore s1
+        addi sp, 4
+        ret
+
 scoreScreen:
         addi sp, -4
         sw ra, 0(sp) # Save return address
+        call resetGame # Reset the game after scoring 
         
         la a0, blackScreen
         call drawScreen # Clear the screen before drawing the score
@@ -610,55 +623,69 @@ scoreScreen:
         lb s1, 0(t1) # Load the score of player 2
 
         bz s0, zeroP1 # If player 1 score is 0, branch to zeroP1
-        bz s1, zeroP2 # If player 2 score is 0, branch to zeroP2
-        j afterDrawn0 # If both scores are not 0, jump to afterDrawn0
+        j checkZeroP2 # If player 1 score is not 0, jump to checkZeroP2
         zeroP1:
         la a0, scoreZeroP1
-        j scoreScreenDraw # Draw the score for player 1
+        call scoreScreenDraw # Draw the score for player 1
         j afterDrawn0
+
+        checkZeroP2: bz s1, zeroP2 # If player 2 score is 0, branch to zeroP2
+        j afterDrawn0 # If both scores are not 0, jump to afterDrawn0
         zeroP2:
         la a0, scoreZeroP2
-        j scoreScreenDraw # Draw the score for player 2
-        
+        call scoreScreenDraw # Draw the score for player 2
+
         afterDrawn0:
         li t0, 1
         beq s0, t0, oneP1 # If player 1 score is 1, branch to oneP1
-        beq s1, t0, oneP2 # If player 2 score is 1, branch to oneP2
-        j afterDrawn1 # If both scores are not 1, jump to afterDrawn1
+        j checkOneP2 # If player 1 score is not 1, jump to checkOneP2
         oneP1:
         la a0, scoreOneP1
-        j scoreScreenDraw
-        j afterDrawn1
+        call scoreScreenDraw
+        li t0, 1
+
+        checkOneP2: beq s1, t0, oneP2 # If player 2 score is 1, branch to oneP2
+        j afterDrawn1 # If both scores are not 1, jump to afterDrawn1
         oneP2:
         la a0, scoreOneP2
-        j scoreScreenDraw
+        call scoreScreenDraw
 
         afterDrawn1:
         li t0, 2
         beq s0, t0, twoP1 # If player 1 score is 2, branch to twoP1
-        beq s1, t0, twoP2 # If player 2 score is 2, branch to twoP2
-        j afterDrawn2 # If both scores are not 2, jump to afterDrawn2
+        j checkTwoP2 # If player 1 score is not 2, jump to checkTwoP2
         twoP1:
         la a0, scoreTwoP1
-        j scoreScreenDraw
-        j afterDrawn2
+        call scoreScreenDraw
+        li t0, 2
+        
+        checkTwoP2: beq s1, t0, twoP2 # If player 2 score is 2, branch to twoP2
+        j afterDrawn2 # If both scores are not 2, jump to afterDrawn2
         twoP2:
         la a0, scoreTwoP2
-        j scoreScreenDraw
+        call scoreScreenDraw
 
         afterDrawn2:
         li t0, 3
         beq s0, t0, threeP1 # If player 1 score is 3, branch to threeP1
-        beq s1, t0, threeP2 # If player 2 score is 3, branch to threeP2
-        j scoreScreenExit
+        j checkThreeP2 # If player 1 score is not 3, jump to checkThreeP2
         threeP1:
         la a0, scoreThreeP1
-        j scoreScreenDraw
-        la a0, gameOverScreen1   # Draw the "P1 WINS" message if player 1 has 3 points
+        call scoreScreenDraw
+        la a0, gameOverScreen1 # Draw the "P1 WINS" message if player 1 has 3 points
+        call scoreScreenDraw
+        call resetScore # Reset the scores
+        
+
+        checkThreeP2: beq s1, t0, threeP2 # If player 2 score is 3, branch to threeP2
+        j scoreScreenExit
         threeP2:
         la a0, scoreThreeP2
-        j scoreScreenDraw
-        la a0, gameOverScreen2   # Draw the "P2 WINS" message if player 2 has 3 points
+        call scoreScreenDraw
+        la a0, gameOverScreen2 # Draw the "P2 WINS" message if player 2 has 3 points
+        call scoreScreenDraw       
+        call resetScore # Reset the scores
+        
         
         scoreScreenExit:
         # Delay to allow the player to see the score before resetting the game
@@ -667,11 +694,28 @@ scoreScreen:
         delay: bge t0, t1, afterDelay # Delay for 1000 cycles
                 addi t0, 1 # Increment the delay counter
                 j delay # Loop until the delay is complete
-        afterDelay: 
+        afterDelay:
         la a0, pongScreen
         call jumpDrawScreen # Draw the pong screen to reset the game
         lw ra, 0(sp) # Restore return address
         addi sp, 4
+        ret
+
+resetScore:
+        la t0, P1Score
+        li s0, 0 # Reset player 1 score to 0
+        sb s0, 0(t0)
+        la t0, P2Score
+        li s0, 0 # Reset player 2 score to 0
+        sb s0, 0(t0)
+
+        halt1Loop:
+        li a1, 0 # Reset a1 to 0
+        li16 a0, 'r'
+        ecall 7
+        li t0, 1
+        bne a1, t0, halt1Loop # Wait for 'r' to be pressed to reset the game
+
         ret
 
 point2Check:
@@ -751,7 +795,7 @@ point_P1:
         addi s0, 1
         sb s0, 0(t0)
         call scoreScreen
-        j resetGame # Reset the game after scoring
+        j collisionCheckExit  # Return to the collision check exit
 
 point_P2:
         la t0, P2Score
@@ -759,7 +803,7 @@ point_P2:
         addi s0, 1
         sb s0, 0(t0)
         call scoreScreen
-        j resetGame # Reset the game after scoring
+        j collisionCheckExit  # Return to the collision check exit
 
 resetGame:
         la t0, stateUP1
@@ -783,7 +827,7 @@ resetGame:
         la t0, ballState
         li s1, 0 # Reset ball state to bottom-left
         sb s1, 0(t0)
-        j collisionCheckExit # Exit the collision check
+        ret
 
 collisionCheckExit:
         lw ra, 0(sp) # Restore return address
@@ -881,15 +925,15 @@ scoreTwoP1:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -898,15 +942,15 @@ scoreThreeP1:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -949,15 +993,15 @@ scoreTwoP2:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -966,15 +1010,15 @@ scoreThreeP2:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
-        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -992,7 +1036,7 @@ gameOverScreen1:
         .byte 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0
         .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0
         .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0
-        .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0
+        .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0
         .byte 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -1009,7 +1053,7 @@ gameOverScreen2:
         .byte 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0
         .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0
         .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0
-        .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0
+        .byte 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0
         .byte 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 

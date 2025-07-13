@@ -213,7 +213,7 @@ export default function CodeEditor({}: {}) {
               setFrequency(val);
               setSpeed(val);
             }}
-            max={2000}
+            max={3000}
             step={1}
             min={1}
             className="w-50"
