@@ -40,7 +40,7 @@ function Console() {
 
         case "MemPrint":
           addOutput(
-            `Memory: [${new Uint8Array(buffers.memory).join(", ")}...]`,
+            `Memory: [${new Uint8Array(buffers.memory).join(", ")}]`,
             "system"
           );
           break;
