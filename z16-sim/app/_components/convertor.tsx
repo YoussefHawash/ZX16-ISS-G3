@@ -1,3 +1,5 @@
+// AI Prompt: make this code more readable and maintainable
+
 "use client";
 import {
   Dialog,
@@ -42,7 +44,7 @@ export function NumberConverter() {
         regex = /^[0-7]+$/;
         break;
       case 10:
-        regex = /^-?[0-9]+$/; // Allow negative for signed decimal
+        regex = /^-?[0-9]+$/;
         break;
       case 16:
         regex = /^[0-9a-fA-F]+$/;
@@ -76,7 +78,6 @@ export function NumberConverter() {
       const maxSigned = Math.pow(2, bits - 1) - 1;
       const minSigned = -Math.pow(2, bits - 1);
 
-      // Convert to decimal first
       if (inputBase === "10" && inputValue.startsWith("-")) {
         decimal = parseInt(inputValue, 10);
       } else {
@@ -89,7 +90,7 @@ export function NumberConverter() {
         return;
       }
 
-      // Check bounds
+      // check bounds
       if (isSigned) {
         if (decimal > maxSigned || decimal < minSigned) {
           setError(
@@ -98,7 +99,7 @@ export function NumberConverter() {
           setResult("");
           return;
         }
-        // Convert negative decimal to two's complement representation
+        // convert negative decimal to two's complement representation
         if (decimal < 0) {
           decimal = Math.pow(2, bits) + decimal;
         }
@@ -182,7 +183,7 @@ export function NumberConverter() {
         </DialogHeader>
         <Separator />
         <div className="w-full max-w-2xl mx-auto ">
-          {/* Settings Row */}
+          {/* settings */}
           <div className="flex gap-4 mb-6">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium ">Bit Width:</label>
@@ -214,7 +215,6 @@ export function NumberConverter() {
           </div>
 
           <div className="space-y-6">
-            {/* Input Section */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium ">From:</label>
@@ -257,7 +257,6 @@ export function NumberConverter() {
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
 
-            {/* Swap Button */}
             <div className="flex justify-center">
               <button
                 onClick={swapBases}

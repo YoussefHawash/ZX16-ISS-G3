@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
-        // optional: indicate length
         "Content-Length": buf.byteLength.toString(),
       },
     });

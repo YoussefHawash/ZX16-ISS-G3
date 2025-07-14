@@ -25,16 +25,14 @@ export default function Page() {
       try {
         const err = await res.json();
         errMsg = err.error || JSON.stringify(err);
-      } catch {
-        /* ignore */
-      }
+      } catch {}
       alert("Assemble failed: " + errMsg);
       return;
     }
 
     // THIS is the important bit:
     const arrayBuffer = await res.arrayBuffer();
-    load(arrayBuffer); // <-- directly push into shared memory
+    load(arrayBuffer);
 
     alert("Assembled and loaded into memory!");
   };

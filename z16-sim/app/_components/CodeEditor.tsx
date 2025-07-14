@@ -30,51 +30,31 @@ export default function CodeEditor({}: {}) {
   function handleEditorDidMount(editor: any, monaco: Monaco) {
     editorRef.current = editor;
 
-    // 1️⃣ Flatten all mnemonics from the JSON
     const mnemonics = Object.values(instructionFormatsByType).flatMap((group) =>
       Object.keys(group)
     );
 
-    // 2️⃣ Build a single regex: \b(add|sub|...|ecall)\b
     const mnemonicRegex = `\\b(${mnemonics.join("|")})\\b`;
 
-    // 3️⃣ Register your language
     monaco.languages.register({ id: "asm", aliases: ["Assembly", "asm"] });
 
-    // 4️⃣ Set up the Monarch tokenizer using that regex
     monaco.languages.setMonarchTokensProvider("asm", {
       defaultToken: "",
       tokenPostfix: ".asm",
       tokenizer: {
         root: [
-          // labels
           [/^[a-zA-Z_]\w*:/, "keyword.i"],
-
-          // instructions (from JSON)
           [new RegExp(mnemonicRegex, "i"), "keyword.r"],
-
-          // registers
           [/\b(x[0-7])\b/i, "variable"],
-
-          // hex numbers
           [/\b0x[0-9A-Fa-f]+\b/, "number.hex"],
-
-          // decimal numbers
           [/\b\d+\b/, "number"],
-
-          // comments
           [/;.*/, "comment"],
-
-          // punctuation
           [/[,\[\]]/, "delimiter"],
-
-          // everything else
           [/[a-zA-Z_]\w*/, "identifier"],
         ],
       },
     });
 
-    // 6️⃣ Define theme with highlight line style
     monaco.editor.defineTheme("asmTheme", {
       base: "vs-dark",
       inherit: true,
