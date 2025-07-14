@@ -13,36 +13,67 @@ import SideMenu from "./Side-Menu";
 
 export default function Grid() {
   Simulator();
-  const worker = useWorker(); // assume this returns a Worker | null
+  const worker = useWorker();
 
+  // refs for AudioContext and shared GainNode
   const audioCtxRef = useRef<AudioContext>(null!);
+  const gainNodeRef = useRef<GainNode>(null!);
+
   useEffect(() => {
     const Ctor = window.AudioContext || (window as any).webkitAudioContext;
-    audioCtxRef.current = new Ctor();
+    const audioCtx = new Ctor();
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 1.0;
+    gainNode.connect(audioCtx.destination);
+
+    audioCtxRef.current = audioCtx;
+    gainNodeRef.current = gainNode;
   }, []);
 
   useEffect(() => {
     if (!worker) return;
 
+    let nextAvailableTime = 0;
+
     const handleMessage = (event: MessageEvent) => {
       const audioCtx = audioCtxRef.current!;
-      if (event.data.type === "playTone") {
-        const { freq, durr } = event.data as { freq: number; durr: number };
-        if (audioCtx.state === "suspended") audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.connect(audioCtx.destination);
-        const startTime = audioCtx.currentTime;
-        osc.start(startTime);
-        osc.stop(startTime + durr / 1000);
-      } else if (event.data.type === "SetVolume") {
-        const { volume } = event.data as { volume: number };
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-        gain.connect(audioCtx.destination);
-      } else if (event.data.type === "stopAudio") {
-        if (audioCtx.state === "running") audioCtx.suspend();
+      const gainNode = gainNodeRef.current!;
+      if (!audioCtx || !gainNode) return;
+
+      switch (event.data.type) {
+        case "playTone": {
+          const { freq, durr } = event.data as {
+            freq: number;
+            durr: number;
+          };
+
+          if (audioCtx.state === "suspended") audioCtx.resume();
+
+          const now = audioCtx.currentTime;
+          const durationSec = durr / 1000;
+          const startTime = Math.max(now, nextAvailableTime);
+          nextAvailableTime = startTime + durationSec;
+
+          const osc = audioCtx.createOscillator();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, startTime);
+          osc.connect(gainNode);
+          osc.start(startTime);
+          osc.stop(startTime + durationSec);
+          break;
+        }
+        case "SetVolume": {
+          const { volume } = event.data as { volume: number };
+          // normalize 0–255 → 0.0–1.0
+          const normalized = Math.min(Math.max(volume / 255, 0), 1);
+          gainNode.gain.setTargetAtTime(normalized, audioCtx.currentTime, 0.01);
+          break;
+        }
+        case "stopAudio": {
+          audioCtx.suspend();
+          nextAvailableTime = 0;
+          break;
+        }
       }
     };
 
