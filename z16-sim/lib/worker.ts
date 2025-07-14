@@ -1,4 +1,4 @@
-// import { CPU } from "./cpu";
+// Worker script for the z16-sim simulator - worked with abdallah moustafa on it
 import { CPU } from "./cpu";
 import { SimulatorState } from "./Types/Definitions";
 

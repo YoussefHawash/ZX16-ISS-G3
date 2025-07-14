@@ -1,3 +1,5 @@
+// AI Prompt: make a custom dialog component in React with TypeScript
+
 import { useEffect, useRef } from "react";
 
 // Custom Dialog Components

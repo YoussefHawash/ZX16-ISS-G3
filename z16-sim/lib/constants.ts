@@ -57,3 +57,4 @@ export const instructionFormats = {
     ECALL: { opcode: 0b111, funct3: 0b000 },
   },
 };
+``;
