@@ -11,6 +11,7 @@ import {
 import Simulator from "@/hooks/use-cpu";
 import { Download, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { NumberConverter } from "./convertor";
 import {
   CustomDialog,
@@ -41,6 +42,7 @@ export default function NavBar() {
         const err = await res.json();
         errMsg = err.error || JSON.stringify(err);
       } catch {}
+      toast.error(`Error assembling code: ${errMsg}`);
     }
 
     if (downloadMode) {
@@ -54,12 +56,14 @@ export default function NavBar() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      alert("Download started!");
+      toast.success("Download started!");
+      setIsOpen(false);
     } else {
       // LOAD path
       const arrayBuffer = await res.arrayBuffer();
       load(arrayBuffer);
-      alert("Assembled and loaded into memory!");
+      toast.success("Assembled and loaded into memory!");
+      setIsOpen(false);
     }
     return;
   };
@@ -76,9 +80,11 @@ export default function NavBar() {
               <button
                 className="
           text-green-400 border border-green-400
-          px-3 py-1 rounded-2xl text-xs
+          px-3 py-2 rounded-2xl text-xs
           hover:bg-green-400 hover:text-black
           transition-colors duration-200
+          hover:cursor-pointer
+          hover:shadow-lg hover:shadow-green-500/30
         "
               >
                 Try our Assembler

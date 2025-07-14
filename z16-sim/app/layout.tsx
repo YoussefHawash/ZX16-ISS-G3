@@ -2,6 +2,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SharedBuffersProvider } from "@/lib/BufferContext";
 import type { Metadata } from "next";
 import { Sora } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const sora = Sora({ subsets: ["latin"], weight: ["400", "600", "700"] });
@@ -25,6 +26,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster position="top-center" richColors />
           </ThemeProvider>
         </SharedBuffersProvider>
       </body>

@@ -1,16 +1,7 @@
-import { Tab, Tabs } from "@/components/Tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import Simulator from "@/hooks/use-cpu";
-import { useSharedBuffers, useWorker } from "@/lib/BufferContext";
-import { SimulatorState } from "@/lib/Types/Definitions";
-import { Command } from "@/lib/worker";
+import { useWorker } from "@/lib/BufferContext";
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 function Console() {
   const [command, setCommand] = useState<number>(0);
   const { buffers, resume } = Simulator();
@@ -22,7 +13,7 @@ function Console() {
     },
   ]);
   const [input, setInput] = useState("");
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when output changes
@@ -56,13 +47,15 @@ function Console() {
 
         case "readInt":
           setCommand(1);
+          toast.info("waiting for input...");
           inputRef.current?.focus();
           break;
 
         case "readStr":
           setCommand(2);
+          console.log("readStr command received");
+          toast.info("waiting for input...");
           inputRef.current?.focus();
-
           break;
 
         case "print":

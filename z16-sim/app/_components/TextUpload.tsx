@@ -4,6 +4,7 @@ import Simulator from "@/hooks/use-cpu";
 import { useSharedBuffers } from "@/lib/BufferContext";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
+import { toast } from "sonner";
 
 export default function TextUpload({ className }: { className?: string }) {
   const { load, reset } = Simulator();
@@ -23,6 +24,7 @@ export default function TextUpload({ className }: { className?: string }) {
       }
     };
     reader.readAsArrayBuffer(file);
+    toast.success("Binary file loaded into memory!");
   };
   return (
     <div className={cn("flex justify-end items-center space-x-2", className)}>
