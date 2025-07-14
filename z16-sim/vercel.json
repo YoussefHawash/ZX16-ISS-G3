@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/assemble.py": {
+      "runtime": "python3.9"
+    }
+  }
+}
