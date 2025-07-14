@@ -1,12 +1,14 @@
-"use client";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { useComputer } from "@/lib/Context/ComputerContext";
+import Slider from "@/components/ui/slider";
+import { Toggle } from "@/components/ui/toggle";
+import Simulator from "@/hooks/use-cpu";
+import { SimulatorState } from "@/lib/Types/Definitions";
 import instructionFormatsByType from "@/public/z16-INST.json";
 import { loader, Monaco } from "@monaco-editor/react";
-import { ArrowRight, Pause, Play } from "lucide-react";
+import { ArrowRight, Pause, Play, RotateCcw, TimerReset } from "lucide-react";
 import dynamic from "next/dynamic";
-import { use, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 loader.config({ paths: { vs: "/monaco/vs" } });
 
@@ -14,24 +16,16 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
 
-export default function CodeEditor({
-  handleStart,
-  handleStop,
-  handleStep,
-  handleFreqChange,
-}: {
-  handleStart: () => void;
-  handleStop: () => void;
-  handleStep: () => void;
-  handleFreqChange: () => void;
-}) {
-  const { pc, assembly, frequency, setPc, running, setFrequency } =
-    useComputer();
-  useEffect(() => {
-    if (frequency > 30) setPc(0); // Reset PC to 1 if frequency is above 30
-  }, [frequency]);
+export default function CodeEditor({}: {}) {
   const editorRef = useRef<ReturnType<Monaco["editor"]["create"]> | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
   const decorationsRef = useRef<string[]>([]);
+  const { buffers, assembly, start, pause, setSpeed, step, reset } =
+    Simulator();
+  const pcRef = useRef<HTMLSpanElement>(null);
+  const [frequency, setFrequency] = useState(1);
+  const [state, setState] = useState<SimulatorState>(SimulatorState.Paused);
+  const prevStateRef = useRef<SimulatorState>(SimulatorState.Paused);
 
   function handleEditorDidMount(editor: any, monaco: Monaco) {
     editorRef.current = editor;
@@ -107,41 +101,61 @@ export default function CodeEditor({
 
   // Update highlighted line when highlightLine prop changes
   useEffect(() => {
-    if (editorRef.current && pc !== undefined) {
-      // Clear previous decorations
-      decorationsRef.current = editorRef.current.deltaDecorations(
-        decorationsRef.current,
-        []
-      );
-
-      // Add new decoration for the highlighted line
-      if (pc > 0 && pc <= assembly.length) {
+    if (!editorRef.current) return;
+    const updateHighlightedLine = (pc: number) => {
+      if (editorRef.current && pc !== undefined) {
+        // Clear previous decorations
         decorationsRef.current = editorRef.current.deltaDecorations(
           decorationsRef.current,
-          [
-            {
-              range: {
-                startLineNumber: pc,
-                startColumn: 1,
-                endLineNumber: pc,
-                endColumn: 1000, // Make sure it covers the whole line
-              },
-              options: {
-                isWholeLine: true,
-                className: "myLineHighlight",
-              },
-            },
-          ]
+          []
         );
-      }
-    }
-  }, [pc, assembly.length]);
 
-  useEffect(() => {
-    if (editorRef.current && assembly.length > 0) {
-      editorRef.current.setValue(assembly.join("\n"));
-    }
-  }, [assembly]);
+        // Add new decoration for the highlighted line
+        if (pc > 0 && pc <= assembly.length) {
+          decorationsRef.current = editorRef.current.deltaDecorations(
+            decorationsRef.current,
+            [
+              {
+                range: {
+                  startLineNumber: pc,
+                  startColumn: 1,
+                  endLineNumber: pc,
+                  endColumn: 1000, // Make sure it covers the whole line
+                },
+                options: {
+                  isWholeLine: true,
+                  className: "myLineHighlight",
+                },
+              },
+            ]
+          );
+        }
+      }
+      if (editorRef.current) {
+        if (autoScroll) {
+          editorRef.current.revealLineInCenter(pc);
+        }
+      }
+    };
+    const view = new Uint16Array(buffers.pc);
+    const currState = new Uint16Array(buffers.state);
+    let rafId: number;
+
+    const update = () => {
+      let changed = prevStateRef.current !== currState[0];
+      if (changed) {
+        prevStateRef.current = currState[0];
+        setState(currState[0] as SimulatorState);
+      }
+      updateHighlightedLine(view[0] + 1);
+      if (pcRef.current) {
+        pcRef.current.textContent = (view[0] + 1).toString();
+      }
+      rafId = requestAnimationFrame(update);
+    };
+    update();
+    return () => cancelAnimationFrame(rafId);
+  }, [assembly, autoScroll]);
 
   return (
     <div className="relative flex flex-col h-full w-full">
@@ -154,8 +168,8 @@ export default function CodeEditor({
         className="w-full bg-[#1e1e1e]"
         theme="vs-dark"
         defaultLanguage="asm"
-        value={assembly.join("\n")}
         onMount={handleEditorDidMount}
+        value={assembly.join("\n")}
         options={{
           readOnly: true,
           minimap: { enabled: false },
@@ -174,41 +188,62 @@ export default function CodeEditor({
       <div className="flex justify-between items-center px-2 bg-neutral-900 border-t-1 border-neutral-800 ">
         <div className="flex items-center gap-2">
           <Button
+            variant={"link"}
+            className="hover:cursor-pointer hover:text-orange-400"
+            onClick={() => reset()}
+          >
+            <RotateCcw />
+          </Button>
+          <Button
             className="hover:cursor-pointer hover:text-green-500 "
             variant={"link"}
             onClick={() => {
-              if (running) {
-                handleStop();
+              if (state === SimulatorState.Running) {
+                pause();
               } else {
-                handleStart();
+                start();
               }
             }}
           >
-            {running ? <Pause /> : <Play />}
+            {state === SimulatorState.Running ? <Pause /> : <Play />}
           </Button>
           <Button
             variant={"link"}
             className="hover:cursor-pointer hover:text-orange-400"
-            onClick={() => handleStep()}
+            onClick={() => step()}
           >
             <ArrowRight />
           </Button>
           <Slider
             value={[frequency]}
             onValueChange={([val]) => {
+              if (val > 30) {
+                val = 3000;
+              }
               setFrequency(val);
-              handleFreqChange();
+              setSpeed(val);
             }}
-            max={47}
+            max={31}
             step={1}
             min={1}
-            className="w-20"
+            className="w-50"
           />
+          <Toggle
+            className="hover:cursor-pointer hover:text-blue-400 text-xs leading-none h-auto px-2 py-1"
+            pressed={autoScroll}
+            onClick={() => {
+              setAutoScroll(!autoScroll);
+            }}
+          >
+            Auto Scroll
+          </Toggle>
         </div>
         <div className="flex items-center gap-4 opacity-60">
-          <span className="text-sm text-gray-400">PC: {pc}</span>
           <span className="text-sm text-gray-400">
-            Frequency: {frequency > 45 ? "Unlimited" : frequency + " Hz"}
+            PC:<span ref={pcRef}>{0}</span>{" "}
+          </span>
+          <span className="text-sm text-gray-400">
+            Frequency: {frequency <= 30 ? frequency + " Hz" : "Unlimited"}
           </span>
         </div>
       </div>

@@ -1,65 +1,69 @@
 import { Tab, Tabs } from "@/components/Tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
-import { useComputer } from "@/lib/Context/ComputerContext";
-import { ArrowRight } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import Simulator from "@/hooks/use-cpu";
+import { ArrowRightLeft, Check, Copy, Search, Settings, X } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Screen from "./screen";
 // RISC-V register naming conventions
 
 const standardNames = ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"];
 const abiNames = ["t0", "ra", "sp", "s0", "s1", "t1", "a0", "a1"];
 
-type LastChange = {
-  register: string;
-  index: number;
-  prevValue: string;
-  newValue: string;
-} | null;
-
 export function Registers() {
-  const { registers } = useComputer();
   const [useABI, setUseABI] = useState(false);
   const [system, setSystem] = useState("HexaDecimal");
-  const [lastChange, setLastChange] = useState<LastChange>(null);
-  const prevRegistersRef = useRef(registers);
+  const [registerValues, setRegisterValues] = useState<Uint16Array>(
+    new Uint16Array(32)
+  ); // Assuming 32 registers
+  const { buffers } = Simulator();
   const currentNames = useABI ? abiNames : standardNames;
 
-  // Track register changes
+  // Track register changes and trigger re-renders
   useEffect(() => {
-    const prevRegisters = prevRegistersRef.current;
+    let animationId: number;
 
-    registers.forEach((value, idx) => {
-      if (prevRegisters[idx] !== value) {
-        setLastChange({
-          register: currentNames[idx],
-          index: idx,
-          prevValue: prevRegisters[idx],
-          newValue: value,
-        });
+    const update = () => {
+      // Create a new Uint16Array to trigger state update
+      const newRegisters = new Uint16Array(buffers.registers);
+      setRegisterValues(newRegisters);
+      animationId = requestAnimationFrame(update);
+    };
+
+    update();
+
+    // Cleanup
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
       }
-    });
+    };
+  }, [buffers.registers]);
 
-    prevRegistersRef.current = registers;
-  }, [registers, currentNames]);
-
-  const formatValue = (byte: string, sys: string) => {
-    if (!byte) return "0x00";
+  const formatValue = (value: number, sys: string) => {
+    const byte = value.toString(2).padStart(16, "0"); // Convert to 16-bit binary string
     switch (sys) {
       case "HexaDecimal":
-        return (
-          "0x" + parseInt(byte, 2).toString(16).toUpperCase().padStart(2, "0")
-        );
+        return "0x" + value.toString(16).toUpperCase().padStart(4, "0");
       case "Binary":
         return byte;
       case "Decimal":
-        return parseInt(byte, 2).toString(10).padStart(3, " ");
+        return value.toString(10).padStart(5, " ");
       default:
         return byte;
     }
@@ -91,7 +95,7 @@ export function Registers() {
       </div>
 
       {/* Registers Table */}
-      <div className="flex-1 overflow-auto p-4 text-[]">
+      <div className=" overflow-auto p-4">
         <div className="max-w-md mx-auto">
           <div className="bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
             {/* Table Header */}
@@ -107,13 +111,12 @@ export function Registers() {
             {/* Table Body */}
             <div className="divide-y divide-zinc-800">
               {currentNames.map((name, idx) => {
-                const isChanged = lastChange && lastChange.index === idx;
+                const value = registerValues[idx] || 0;
 
                 return (
                   <div
                     key={`register-${idx}`}
-                    className={`grid grid-cols-2 gap-4 px-4 py-3 transition-all duration-300
-              ${isChanged ? "bg-amber-500/20" : ""}`}
+                    className={`grid grid-cols-2 gap-4 px-4 py-3 transition-all duration-300`}
                   >
                     <div
                       className="font-mono text-sm text-zinc-300"
@@ -125,18 +128,13 @@ export function Registers() {
                       {name}
                     </div>
                     <div
-                      className={`font-mono text-sm text-right transition-all duration-300
-              ${
-                isChanged
-                  ? "text-amber-400 font-semibold scale-105"
-                  : "text-zinc-400"
-              }`}
+                      className={`font-mono text-sm text-right transition-all duration-300 text-zinc-400`}
                       style={{
                         fontFamily:
                           "Consolas, 'Fira Mono', 'Menlo', 'Monaco', 'Liberation Mono', 'Courier New', monospace",
                       }}
                     >
-                      {formatValue(registers[idx], system)}
+                      {formatValue(value, system)}
                     </div>
                   </div>
                 );
@@ -145,90 +143,315 @@ export function Registers() {
           </div>
         </div>
       </div>
+      <Screen />
     </div>
   );
 }
 
-function Memory() {
-  const { memory } = useComputer();
-  const [system, setSystem] = useState<string>("HexaDecimal");
+const MemoryViewer = () => {
+  const { buffers } = Simulator();
+  const memory = new Uint8Array(buffers.memory);
+  const [bytesPerRow, setBytesPerRow] = useState(1);
+  const [addressFormat, setAddressFormat] = useState("hex");
+  const [valueFormat, setValueFormat] = useState("hex");
+  const [addressInput, setAddressInput] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 30 });
+
+  const ROW_HEIGHT = 24;
+  const BUFFER_SIZE = 10;
+
+  const totalRows = Math.ceil(memory.length / bytesPerRow);
+
+  const formatAddress = useCallback(
+    (address: number) => {
+      if (addressFormat === "hex") {
+        return "0x" + address.toString(16).toUpperCase().padStart(4, "0");
+      }
+      return address.toString().padStart(6, "0");
+    },
+    [addressFormat]
+  );
+
+  const handleJumpToAddress = useCallback(() => {
+    if (!addressInput) {
+      return;
+    }
+
+    let address;
+
+    // Parse address based on format
+    if (addressInput.startsWith("0x")) {
+      // Hex address
+      address = parseInt(addressInput, 16);
+    } else {
+      // Decimal address
+      address = parseInt(addressInput, 10);
+    }
+
+    if (!isNaN(address) && address >= 0 && address < memory.length) {
+      // Scroll to the row containing this address
+      const row = Math.floor(address / bytesPerRow);
+      if (containerRef.current) {
+        containerRef.current.scrollTop = row * ROW_HEIGHT;
+      }
+    }
+  }, [addressInput, memory.length, bytesPerRow]);
+  const formatValue = useCallback(
+    (value: number) => {
+      if (valueFormat === "hex") {
+        return value.toString(16).toUpperCase().padStart(2, "0");
+      }
+      return value.toString().padStart(3, "0");
+    },
+    [valueFormat]
+  );
+
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const scrollTop = containerRef.current.scrollTop;
+    const containerHeight = containerRef.current.clientHeight;
+
+    const startRow = Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_SIZE;
+    const endRow =
+      Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + BUFFER_SIZE;
+
+    setVisibleRange({
+      start: Math.max(0, startRow),
+      end: Math.min(totalRows, endRow),
+    });
+  }, [totalRows]);
+
+  useEffect(() => {
+    handleScroll();
+  }, [bytesPerRow, handleScroll]);
+
+  const renderRow = useCallback(
+    (rowIndex: number) => {
+      const startAddress = rowIndex * bytesPerRow;
+      const endAddress = Math.min(startAddress + bytesPerRow, memory.length);
+      const rowData = [];
+
+      for (let i = startAddress; i < endAddress; i++) {
+        rowData.push(
+          <span
+            key={i}
+            className={`
+            inline-block w-10 text-center font-mono text-sm
+            
+          `}
+          >
+            {formatValue(memory[i])}
+          </span>
+        );
+      }
+
+      // Fill remaining cells if row is incomplete
+      for (let i = endAddress; i < startAddress + bytesPerRow; i++) {
+        rowData.push(
+          <span
+            key={i}
+            className="inline-block w-10 text-center font-mono text-sm text-gray-300"
+          >
+            --
+          </span>
+        );
+      }
+
+      return (
+        <div
+          key={rowIndex}
+          className="flex items-center hover:bg-neutral-800"
+          style={{ height: ROW_HEIGHT }}
+        >
+          <div className="w-24 px-2 font-mono text-sm text-gray-600">
+            {formatAddress(startAddress)}
+          </div>
+          <div className="flex-1 flex gap-1 px-2">{rowData}</div>
+          <div className="px-2 font-mono text-xs text-gray-500">
+            {Array.from({ length: endAddress - startAddress }, (_, i) => {
+              const byte = memory[startAddress + i];
+              return byte >= 32 && byte <= 126
+                ? String.fromCharCode(byte)
+                : ".";
+            }).join("")}
+          </div>
+        </div>
+      );
+    },
+    [bytesPerRow, memory, formatAddress, formatValue]
+  );
+
+  const visibleRows = [];
+  for (let i = visibleRange.start; i < visibleRange.end; i++) {
+    visibleRows.push(renderRow(i));
+  }
 
   return (
-    <div className="flex flex-col p-4 h-full items-center">
-      <Select
-        defaultValue="HexaDecimal"
-        onValueChange={(value) => setSystem(value)}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="HexaDecimal" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="HexaDecimal">Hexadecimal</SelectItem>
-          <SelectItem value="Binary">Binary</SelectItem>
-          <SelectItem value="Decimal">Decimal</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="w-full h-[95%] flex flex-col bg-neutral-900 shadow-lg">
+      {/* Header */}
+      <div className="flex items-center p-2 border-b justify-between ">
+        {/* Search */}
+        <div className="relative">
+          <input
+            type="text"
+            value={addressInput}
+            onChange={(e) => setAddressInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleJumpToAddress()}
+            placeholder="Search Adrress"
+            className="pl-8 pr-4 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+          />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        </div>
+        <div className="flex flex-col items-start">
+          <span className="text-xs text-gray-500">
+            Value Format: {valueFormat}
+          </span>
+          <span className="text-xs text-gray-500">
+            Address Format: {addressFormat}
+          </span>
+        </div>
+        {/* Status  */}
 
-      <div className="mt-4">
-        <div className="flex gap-1 flex-wrap">
-          {memory.slice(0xf000, 0xffff).map((byte, index) => (
-            <div
-              className="flex flex-col p-1 items-center border rounded"
-              key={index}
-            >
-              <span className="text-gray-500">
-                {`0x${(index + 0xf000).toString(16).toUpperCase()}`}
-              </span>
-              <span key={index}>
-                {system === "HexaDecimal"
-                  ? parseInt(byte, 2)
-                      .toString(16)
-                      .toUpperCase()
-                      .padStart(2, "0")
-                  : system === "Binary"
-                  ? byte
-                  : parseInt(byte, 2).toString(10)}
-              </span>
+        {/* Settings Button */}
+        <Dialog>
+          <DialogTrigger className=" hover:cursor-pointer rounded">
+            <Settings size={20} />
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle> Memory Viewer Settings</DialogTitle>
+            </DialogHeader>
+            <Separator />
+            <div className="flex items-center justify-center ">
+              <div className="  w-full">
+                <div className="space-y-4">
+                  {/* Bytes per row */}
+                  <div>
+                    <label className="block text-sm font-medium  mb-2">
+                      Bytes per Row
+                    </label>
+                    <select
+                      value={bytesPerRow}
+                      onChange={(e) => setBytesPerRow(Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {[1, 2, 4, 8, 16, 32].map((n) => (
+                        <option key={n} value={n} className="bg-neutral-800">
+                          {n} bytes
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Address format */}
+                  <div>
+                    <label className="block text-sm font-medium  mb-2">
+                      Address Format
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="hex"
+                          checked={addressFormat === "hex"}
+                          onChange={(e) => setAddressFormat(e.target.value)}
+                          className="mr-2"
+                        />
+                        Hexadecimal
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="decimal"
+                          checked={addressFormat === "decimal"}
+                          onChange={(e) => setAddressFormat(e.target.value)}
+                          className="mr-2"
+                        />
+                        Decimal
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Value format */}
+                  <div>
+                    <label className="block text-sm font-medium  mb-2">
+                      Value Format
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="hex"
+                          checked={valueFormat === "hex"}
+                          onChange={(e) => setValueFormat(e.target.value)}
+                          className="mr-2"
+                        />
+                        Hexadecimal
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="decimal"
+                          checked={valueFormat === "decimal"}
+                          onChange={(e) => setValueFormat(e.target.value)}
+                          className="mr-2"
+                        />
+                        Decimal
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Memory Grid */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto"
+        style={{ height: "calc(100% - 80px)" }}
+      >
+        {/* Virtual scroll spacer */}
+        <div style={{ height: totalRows * ROW_HEIGHT }}>
+          <div
+            style={{
+              transform: `translateY(${visibleRange.start * ROW_HEIGHT}px)`,
+            }}
+          >
+            {/* Add header*/}
+            <div className="flex items-center bg-neutral-900 py-2 border-b-1 text-gray-400 font-mono text-xs">
+              <div className="w-24 px-2">Address</div>
+              <div className="flex-1 flex gap-1 px-2">
+                {Array.from({ length: bytesPerRow }, (_, i) => (
+                  <span
+                    key={i}
+                    className="inline-block w-10 text-center font-semibold"
+                  >
+                    +{i.toString(16).toUpperCase()}
+                  </span>
+                ))}
+              </div>
+              <div className="px-2">ASCII</div>
+            </div>
+            {visibleRows}
+          </div>
         </div>
       </div>
     </div>
   );
-}
-
-export function Convertor() {
-  const [system, setSystem] = useState<string>("HexaDecimal");
-  return (
-    <div className="flex flex-col p-4 h-full">
-      <Select
-        defaultValue="HexaDecimal"
-        onValueChange={(value) => setSystem(value)}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="HexaDecimal" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="HexaDecimal">Hexadecimal</SelectItem>
-          <SelectItem value="Binary">Binary</SelectItem>
-          <SelectItem value="Decimal">Decimal</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <div className="mt-4">
-        <div className="flex gap-1 flex-wrap"></div>
-      </div>
-    </div>
-  );
-}
+};
 
 export default function SideMenu() {
-  const { screenmemory } = useComputer();
   const tabData: Tab[] = [
     { label: "Registers", content: <Registers /> },
-    { label: "Convertor", content: <Convertor /> },
-    { label: "Memory", content: <Memory /> },
-    { label: "Screen", content: <Screen memory={screenmemory} /> },
+    { label: "Memory", content: <MemoryViewer /> },
   ];
   return <Tabs className="h-[100%] w-full" tabs={tabData} />;
 }
