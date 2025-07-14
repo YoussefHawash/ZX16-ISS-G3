@@ -208,15 +208,20 @@ export default function CodeEditor({}: {}) {
             min={1}
             className="w-50"
           />
-          <Toggle
-            className="hover:cursor-pointer hover:text-blue-400 text-xs leading-none h-auto px-2 py-1"
-            pressed={autoScroll}
-            onClick={() => {
-              setAutoScroll(!autoScroll);
-            }}
+          <Button
+            variant={"ghost"}
+            className="text-xs px-2 py-1 hover:bg-transparent"
+            onClick={() => setAutoScroll((prev) => !prev)}
           >
+            <input
+              type="checkbox"
+              checked={autoScroll}
+              readOnly
+              className=" accent-orange-400"
+              style={{ pointerEvents: "none" }}
+            />
             Auto Scroll
-          </Toggle>
+          </Button>
         </div>
         <div className="flex items-center gap-4 opacity-60">
           <span className="text-sm text-gray-400">
