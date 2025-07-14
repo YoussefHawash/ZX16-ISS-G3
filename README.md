@@ -101,12 +101,9 @@ You should have **Node Js** install on your device through this [Link](https://n
 ### Install Dependencies
 
 ```bash
-
-npm  install  --global  yarn
-
 cd  ./z16-sim
 
-yarn  install
+npm  install 
 
 ```
 
@@ -114,7 +111,7 @@ yarn  install
 
 ```bash
 
-yarn  run  dev
+npm run dev
 
 ```
 
@@ -192,9 +189,25 @@ Each test case is documented with:
 
 ---
 
-## Project Challenges
+# Project Challenges
+## 🚀 Enabling High Refresh Rates with Multithreading
 
-To Be Written After The Project ends.....
+One of the core challenges in this project was achieving a smooth, high-frequency screen refresh (~60 FPS) without sacrificing CPU execution speed. Initially, the rendering loop and instruction execution were coupled within the React component lifecycle, which led to laggy performance due to React’s render overhead and JavaScript’s single-threaded nature.
+
+To overcome this, we adopted **Web Workers** and **`SharedArrayBuffer`** to offload CPU execution into a separate thread. This enabled true multithreading:
+
+- **CPU Execution Thread**: A Web Worker runs the CPU's instruction loop in a tight `while` loop, using `Atomics` to manage execution state (e.g., `Paused`, `Running`, `Halted`) in a shared state buffer.
+- **UI Thread**: The React main thread handles screen rendering independently, periodically reading the latest video memory and re-rendering the canvas at a consistent rate (e.g., using `requestAnimationFrame` or `setInterval`).
+
+By decoupling CPU computation from UI rendering:
+
+-  We achieved **independent frame updates**, eliminating stutter caused by blocking CPU logic.
+- **Memory synchronization** was efficiently managed through shared buffers without repeated message passing.
+-  The architecture simulated a **hardware-like environment**, where CPU and display operate asynchronously yet coherently.
+
+This approach allowed us to emulate real-time behavior and maintain visual responsiveness — a crucial requirement for a responsive simulator.
+
+(Written By the team, enchanced by AI)
 
 ## Team Members
 
@@ -209,7 +222,8 @@ To Be Written After The Project ends.....
 - [ZX16 ISA Repository](https://github.com/shalan/z16.git)
 
 - CSCE 2303 Project Description (zx16-sim.pdf)
-
+- 
+- [Youssef Hawash](https://github.com/YoussefHawash) and [Abdallah Mostafa](https://github.com/AbdallahMostafaIbrahim) Worked on an Enhanced Assembler to suite the needs for the porject
 ---
 
 ## License
