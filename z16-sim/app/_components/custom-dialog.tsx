@@ -15,15 +15,18 @@ const CustomDialogContent = ({
   children,
   className = "",
 }: any) => {
-  const contentRef = useRef(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: any) => {
       if (e.key === "Escape") onClose();
     };
 
-    const handleClickOutside = (e) => {
-      if (contentRef.current && !contentRef.current.contains(e.target)) {
+    const handleClickOutside = (e: any) => {
+      if (
+        contentRef.current &&
+        !(contentRef.current as HTMLDivElement).contains(e.target)
+      ) {
         onClose();
       }
     };
