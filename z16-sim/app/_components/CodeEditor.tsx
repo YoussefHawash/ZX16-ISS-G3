@@ -243,7 +243,7 @@ export default function CodeEditor({}: {}) {
             PC:<span ref={pcRef}>{0}</span>{" "}
           </span>
           <span className="text-sm text-gray-400">
-            Frequency: {frequency <= 30 ? frequency + " Hz" : "Unlimited"}
+            Frequency: {frequency > 30 ? "3K" : frequency}Hz
           </span>
         </div>
       </div>

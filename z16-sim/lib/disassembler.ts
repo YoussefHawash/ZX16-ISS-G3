@@ -282,7 +282,6 @@ export default function parseInstructionZ16(
         const hi6 = (current_instr >> 9) & 0x03f; // bits[14:9]
         const RD = (current_instr >> 6) & 0x07; // bits[8:6] is RD/RS1
         const lo3 = (current_instr >> 3) & 0x07; // bits[5:3]
-        //TODO
         const upperimmediate = (hi6 << 3) | lo3; // Combine hi6 (upper 6 bits) and lo3 (lower 3 bits)
         const name = instructionFormat("U", f);
         if (!name) {
