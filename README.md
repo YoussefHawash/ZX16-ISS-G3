@@ -364,7 +364,7 @@ python main.py tests/TC-ZX16-08.s -o tests/TC-ZX16-08.bin
 ## TC-ZX16-09: MMIO Graphics Test
 
 **Test Objective:**  
-Test memory-mapped I/O writes for tile map and palette.
+Verify correctness of memory-mapped I/O for color palette, tile definitions, and tile map rendering
 
 **Test Steps:**
 ```bash
@@ -372,15 +372,10 @@ cd scripts
 python main.py tests/TC-ZX16-09.s -o tests/TC-ZX16-09.bin
 ```
 
-**Expected Results:**
-| Register | Value | Meaning                |
-| -------- | ----- | ---------------------- |
-| x1       | 61440 | `0xF000` tile map base |
-| x2       | 5     | Tile index written     |
-| x3       | 64000 | `0xFA00` palette base  |
-| x4       | 9     | Palette value written  |
-| x6       | 61440 | ECALL 9 base addr      |
-| x7       | 2     | ECALL 9 length         |
+**Expected Behavior:**
+- All 16 colors in the ZX16 palette are defined and stored at MMIO address 0xFA00
+- Corresponding tile definitions are stored at 0xF200, each filled with a repeating byte indicating palette color index
+- The tile map (0xF000) is filled with visual rows of tile indices 0–15, then 0–3 (repeated), ensuring full palette coverage and wraparound rendering
 
 ## TC-ZX16-10: ECALL Sound Playback Test (Royal Theme)
 
