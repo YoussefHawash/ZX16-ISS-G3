@@ -715,7 +715,9 @@ resetScore:
         ecall 7
         li t0, 1
         bne a1, t0, halt1Loop # Wait for 'r' to be pressed to reset the game
-
+         li16 a0, 'R'
+        ecall 7
+          bne a1, t0, halt1Loop # Wait for 'r' to be pressed to reset the game
         ret
 
 point2Check:
