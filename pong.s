@@ -414,11 +414,6 @@ drawScreen:
         j drawLoop
         drawScreenExit:   ret
 
-# Intermediate function to jump to the game loop.
-# This is used to handle the limits of the j instruction.
-jumpGameLoop:
-        j gameLoop
-
 # This function is used to move the ball down and to the left.
 # It checks the current position of the ball and updates it accordingly.
 moveBallBottom_Left:
@@ -601,6 +596,11 @@ bounceFromBottom:
 jumpDrawScreen:
         j drawScreen
 
+# Intermediate function to jump to the game loop.
+# This is used to handle the limits of the j instruction.
+jumpGameLoop:
+        j gameLoop
+
 # Intermediate function to jump to the game loop exit function.
 jumpGameLoopExit:
         j gameLoopExit
@@ -659,8 +659,8 @@ scoreScreenDraw:
 scoreScreen:
         addi sp, -4
         sw ra, 0(sp) # Save return address
-        call resetGame # Reset the game after scoring 
-        
+        call resetGame # Reset the game after scoring
+
         la a0, blackScreen
         call drawScreen # Clear the screen before drawing the score
 
@@ -672,6 +672,7 @@ scoreScreen:
         bz s0, zeroP1 # If player 1 score is 0, branch to zeroP1
         j checkZeroP2 # If player 1 score is not 0, jump to checkZeroP2
         zeroP1:
+        call scoreSound # Play the score sound
         la a0, scoreZeroP1
         call scoreScreenDraw # Draw the score for player 1
         j afterDrawn0
@@ -679,6 +680,7 @@ scoreScreen:
         checkZeroP2: bz s1, zeroP2 # If player 2 score is 0, branch to zeroP2
         j afterDrawn0 # If both scores are not 0, jump to afterDrawn0
         zeroP2:
+        call scoreSound # Play the score sound
         la a0, scoreZeroP2
         call scoreScreenDraw # Draw the score for player 2
 
@@ -687,6 +689,7 @@ scoreScreen:
         beq s0, t0, oneP1 # If player 1 score is 1, branch to oneP1
         j checkOneP2 # If player 1 score is not 1, jump to checkOneP2
         oneP1:
+        call scoreSound # Play the score sound
         la a0, scoreOneP1
         call scoreScreenDraw
         li t0, 1
@@ -694,6 +697,7 @@ scoreScreen:
         checkOneP2: beq s1, t0, oneP2 # If player 2 score is 1, branch to oneP2
         j afterDrawn1 # If both scores are not 1, jump to afterDrawn1
         oneP2:
+        call scoreSound # Play the score sound
         la a0, scoreOneP2
         call scoreScreenDraw
 
@@ -702,6 +706,7 @@ scoreScreen:
         beq s0, t0, twoP1 # If player 1 score is 2, branch to twoP1
         j checkTwoP2 # If player 1 score is not 2, jump to checkTwoP2
         twoP1:
+        call scoreSound # Play the score sound
         la a0, scoreTwoP1
         call scoreScreenDraw
         li t0, 2
@@ -709,6 +714,7 @@ scoreScreen:
         checkTwoP2: beq s1, t0, twoP2 # If player 2 score is 2, branch to twoP2
         j afterDrawn2 # If both scores are not 2, jump to afterDrawn2
         twoP2:
+        call scoreSound # Play the score sound
         la a0, scoreTwoP2
         call scoreScreenDraw
 
@@ -716,21 +722,25 @@ scoreScreen:
         li t0, 3
         beq s0, t0, threeP1 # If player 1 score is 3, branch to threeP1
         j checkThreeP2 # If player 1 score is not 3, jump to checkThreeP2
-        threeP1:
+        threeP1:  
+        call scoreSound # Play the score sound
         la a0, scoreThreeP1
         call scoreScreenDraw
         la a0, gameOverScreen1 # Draw the "P1 WINS" message if player 1 has 3 points
         call scoreScreenDraw
+        call victorySound
         call resetScore # Reset the scores
         
 
         checkThreeP2: beq s1, t0, threeP2 # If player 2 score is 3, branch to threeP2
         j scoreScreenExit
         threeP2:
+        call scoreSound # Play the score sound
         la a0, scoreThreeP2
         call scoreScreenDraw
         la a0, gameOverScreen2 # Draw the "P2 WINS" message if player 2 has 3 points
-        call scoreScreenDraw       
+        call scoreScreenDraw   
+        call victorySound    
         call resetScore # Reset the scores
         
         
@@ -746,9 +756,11 @@ scoreScreen:
         call jumpDrawScreen # Draw the pong screen to reset the game
         lw ra, 0(sp) # Restore return address
         addi sp, 4
-        ret
+        j jumpGameLoop
 
 resetScore:
+        addi sp, -4
+        sw ra, 0(sp) # Save return address
         la t0, P1Score
         li s0, 0 # Reset player 1 score to 0
         sb s0, 0(t0)
@@ -763,7 +775,12 @@ resetScore:
         li t0, 1
         bne a1, t0, halt1Loop # Wait for 'r' to be pressed to reset the game
 
+        lw ra, 0(sp) # Restore return address
+        addi sp, 4
         ret
+
+jumpScoreScreen:
+        j scoreScreen # Jump to the score screen
 
 point2Check:
         la t0, ballPosition
@@ -832,38 +849,6 @@ collisionWithP2:
         jumpDirectionToBottomLeft:
         j changeBallDirectionBottomLeft
 
-point1Check:
-        la t0, ballPosition
-        lw s0, 0(t0) # Load the current position of the ball
-        la t1, verticalBorder2
-        lw s1, 0(t1) # Load the current tile of the vertical border
-
-        li16 t0, 14
-        point1Loop:
-        bz t0, point1Exit
-        beq s0, s1, point_P1 # If the ball is at the right border, branch to intermediate jump
-        addi s1, 20
-        addi t0, -1 # Decrement the counter
-        j point1Loop # Loop until the counter reaches 0
-        point1Exit:
-        j collisionCheckExit
-
-point_P1:
-        la t0, P1Score
-        lb s0, 0(t0)
-        addi s0, 1
-        sb s0, 0(t0)
-        call scoreScreen
-        j collisionCheckExit  # Return to the collision check exit
-
-point_P2:
-        la t0, P2Score
-        lb s0, 0(t0)
-        addi s0, 1
-        sb s0, 0(t0)
-        call scoreScreen
-        j collisionCheckExit  # Return to the collision check exit
-
 resetGame:
         la t0, stateUP1
         li s0, 0 # Reset player 1 state to not moving
@@ -888,9 +873,131 @@ resetGame:
         sb s1, 0(t0)
         ret
 
+scoreSound:
+        addi sp, -8
+        sb s0, 0(sp) # Save s0
+        sb s1, 4(sp) # Save s1
+
+        li16 a0, 254       # Max volume
+        ecall 5
+
+        # C5 (523 Hz) — base
+        li16 a0, 523
+        li16 a1, 80
+        ecall 4
+
+        # E5 (659 Hz) — major third
+        li16 a0, 659
+        li16 a1, 80
+        ecall 4
+
+        # G5 (784 Hz) — perfect fifth
+        li16 a0, 784
+        li16 a1, 80
+        ecall 4
+
+        # High C6 (1046 Hz) — octave jump for extra joy
+        li16 a0, 1046
+        li16 a1, 100
+        ecall 4
+
+        lb s0, 0(sp) # Restore s0
+        lb s1, 4(sp) # Restore s1
+        addi sp, 8
+        ret
+
+victorySound:
+        li16 a0, 254       # max volume
+        ecall 5
+
+        # — Opening Ascend: C5 → E5 → G5 → B5 → C6
+        li16 a0, 523       # C5
+        li16 a1, 100
+        ecall 4
+
+        li16 a0, 659       # E5
+        li16 a1, 100
+        ecall 4
+
+        li16 a0, 784       # G5
+        li16 a1, 100
+        ecall 4
+
+        li16 a0, 987       # B5
+        li16 a1, 100
+        ecall 4
+
+        li16 a0, 1046      # C6
+        li16 a1, 200       # hold the crown note
+        ecall 4
+
+        # — Royal Echo (soft repeat of C6)
+        li16 a0, 1046
+        li16 a1, 150
+        ecall 4
+
+        # — Flourish Descent: A5 → G5 → E5 → C5
+        li16 a0, 880       # A5
+        li16 a1, 120
+        ecall 4
+
+        li16 a0, 784       # G5
+        li16 a1, 120
+        ecall 4
+
+        li16 a0, 659       # E5
+        li16 a1, 150
+        ecall 4
+
+        li16 a0, 523       # C5
+        li16 a1, 200       # resolution on home
+        ecall 4
+
+        # — Final Triumphant Trio: G5 → B5 → C6
+        li16 a0, 784       # G5
+        li16 a1, 80
+        ecall 4
+
+        li16 a0, 987       # B5
+        li16 a1, 80
+        ecall 4
+
+        li16 a0, 1046      # C6
+        li16 a1, 250       # grand finale hold
+        ecall 4
+        ret
+
+point1Check:
+        la t0, ballPosition
+        lw s0, 0(t0) # Load the current position of the ball
+        la t1, verticalBorder2
+        lw s1, 0(t1) # Load the current tile of the vertical border
+
+        li16 t0, 14
+        point1Loop:
+        bz t0, point1Exit
+        beq s0, s1, point_P1 # If the ball is at the right border, branch to intermediate jump
+        addi s1, 20
+        addi t0, -1 # Decrement the counter
+        j point1Loop # Loop until the counter reaches 0
+        point1Exit:
+        j collisionCheckExit
+
+point_P1:
+        la t0, P1Score
+        lb s0, 0(t0)
+        addi s0, 1
+        sb s0, 0(t0)
+        j jumpScoreScreen
+
+point_P2:
+        la t0, P2Score
+        lb s0, 0(t0)
+        addi s0, 1
+        sb s0, 0(t0)
+        j jumpScoreScreen
+
 collisionCheckExit:
-        lw ra, 0(sp) # Restore return address
-        addi sp, 4
         ret
 
 
