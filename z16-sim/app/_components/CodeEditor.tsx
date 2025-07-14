@@ -1,12 +1,13 @@
-"use client";
 import { Button } from "@/components/ui/button";
 import Slider from "@/components/ui/slider";
+import { Toggle } from "@/components/ui/toggle";
 import Simulator from "@/hooks/use-cpu";
 import { SimulatorState } from "@/lib/Types/Definitions";
 import instructionFormatsByType from "@/public/z16-INST.json";
 import { loader, Monaco } from "@monaco-editor/react";
 import { ArrowRight, Pause, Play, RotateCcw, TimerReset } from "lucide-react";
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 loader.config({ paths: { vs: "/monaco/vs" } });
@@ -17,8 +18,9 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
 
 export default function CodeEditor({}: {}) {
   const editorRef = useRef<ReturnType<Monaco["editor"]["create"]> | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
   const decorationsRef = useRef<string[]>([]);
-  const { buffers, assembly, start, pause, resume, setSpeed, step, reset } =
+  const { buffers, assembly, start, pause, setSpeed, step, reset } =
     Simulator();
   const pcRef = useRef<HTMLSpanElement>(null);
   const [frequency, setFrequency] = useState(1);
@@ -129,6 +131,11 @@ export default function CodeEditor({}: {}) {
           );
         }
       }
+      if (editorRef.current) {
+        if (autoScroll) {
+          editorRef.current.revealLineInCenter(pc);
+        }
+      }
     };
     const view = new Uint16Array(buffers.pc);
     const currState = new Uint16Array(buffers.state);
@@ -148,7 +155,7 @@ export default function CodeEditor({}: {}) {
     };
     update();
     return () => cancelAnimationFrame(rafId);
-  }, [assembly]);
+  }, [assembly, autoScroll]);
 
   return (
     <div className="relative flex flex-col h-full w-full">
@@ -210,21 +217,33 @@ export default function CodeEditor({}: {}) {
           <Slider
             value={[frequency]}
             onValueChange={([val]) => {
+              if (val > 30) {
+                val = 3000;
+              }
               setFrequency(val);
               setSpeed(val);
             }}
-            max={2000}
+            max={31}
             step={1}
             min={1}
             className="w-50"
           />
+          <Toggle
+            className="hover:cursor-pointer hover:text-blue-400 text-xs leading-none h-auto px-2 py-1"
+            pressed={autoScroll}
+            onClick={() => {
+              setAutoScroll(!autoScroll);
+            }}
+          >
+            Auto Scroll
+          </Toggle>
         </div>
         <div className="flex items-center gap-4 opacity-60">
           <span className="text-sm text-gray-400">
             PC:<span ref={pcRef}>{0}</span>{" "}
           </span>
           <span className="text-sm text-gray-400">
-            Frequency: {frequency + " Hz"}
+            Frequency: {frequency <= 30 ? frequency + " Hz" : "Unlimited"}
           </span>
         </div>
       </div>

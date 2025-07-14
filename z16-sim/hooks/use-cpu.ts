@@ -1,11 +1,16 @@
-import { useAssemblyList, useSharedBuffers } from "@/lib/BufferContext";
+"use client";
+import {
+  useAssemblyList,
+  useSharedBuffers,
+  useWorker,
+} from "@/lib/BufferContext";
 import { CPU } from "@/lib/cpu";
 import { SimulatorState } from "@/lib/Types/Definitions";
-import { Command } from "@/lib/worker";
 import { useEffect } from "react";
 
 export default function Simulator() {
   const buffers = useSharedBuffers();
+  const workerRef = useWorker();
   const [assembly, setAssembly] = useAssemblyList();
   const managerView = new Int32Array(buffers.manager);
 
@@ -80,5 +85,7 @@ export default function Simulator() {
     setSpeed,
     reset,
     assembly,
+    workerRef,
+    setAssembly,
   };
 }

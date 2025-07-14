@@ -112,7 +112,6 @@ const Screen = memo(({ className }: { className?: string }) => {
       />
       <div className="mt-4 text-xs text-gray-500 font-mono">
         <div>Resolution: 320×240</div>
-        <div>Tiles: 20×15 (16×16px each)</div>
         <div>Colors: 16 (RGB332 format)</div>
       </div>
     </div>

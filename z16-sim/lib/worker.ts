@@ -94,7 +94,7 @@ function main() {
 
   function resume() {
     if (cpu.state !== SimulatorState.Blocked) return; // Only resume if blocked
-    cpu.pc += 2; // Move to the next instruction
+
     // if we were running, go back into the run loop;
     // otherwise just emit an update so the UI redraws
     if (cpu.prevState === SimulatorState.Running) {

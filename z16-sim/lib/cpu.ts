@@ -25,6 +25,7 @@ export class CPU {
   //Getters
   load(): void {
     this.initialMemory = new Uint8Array(this.memory); // Store original memory for reset
+    this.reset();
     this.instructions = parseInstructionZ16(this.memory)[1];
   }
 
@@ -35,6 +36,7 @@ export class CPU {
   pause(): void {
     if (this.state === SimulatorState.Running) {
       this.state = SimulatorState.Paused;
+      this.prevState = SimulatorState.Running; // Store previous state
     }
   }
   get pc(): number {
@@ -64,6 +66,8 @@ export class CPU {
     this.pc = 0;
     this.registers.fill(0);
     this.state = SimulatorState.Paused;
+    this.prevState = SimulatorState.Paused; // Reset previous state
+    this.pressedKeys.clear();
     if (this.initialMemory) {
       this.memory.set(this.initialMemory); // Reset memory to initial state
     }
@@ -406,32 +410,61 @@ export class CPU {
 
   handleSyscall(this: CPU, syscallCode: number): void {
     switch (syscallCode) {
-      case 0: // Exit
+      case 1: // read str
+        const addr = this.registers[6]; // a0
+        const max_length = this.registers[7]; // a1
+        this.prevState = this.state; // Store previous state
+        this.state = SimulatorState.Blocked; // Blocked state
+        postMessage({
+          type: "readStr",
+          addr,
+          max_length,
+        });
         break;
-      case 1: // Print
+      case 2: // Read int
+        this.prevState = this.state; // Store previous state
+        this.state = SimulatorState.Blocked; // Blocked state
+        postMessage({ type: "readInt" });
         break;
-      case 2: // Read
-        // Implement read functionality if needed
+      case 3: // print str
+        let strAddr = this.registers[6]; // a0
+        let output = "";
+        while (this.memory[strAddr] !== 0) {
+          const charCode = this.memory[strAddr++];
+          output += String.fromCharCode(charCode);
+        }
+        postMessage({ type: "print", content: output });
         break;
-      case 3: // Write
+      case 4: //play tone
+        const frequency = this.registers[6]; // a0
+        const duration = this.registers[7]; // a1
+        postMessage({ type: "playTone", freq: frequency, durr: duration });
+        break;
+      case 5: // play audio
+        const volume = this.registers[6]; // a0
+        postMessage({ type: "SetVolume", volume });
+        break;
+      case 6: // stop audio
+        postMessage({ type: "stopAudio" });
         break;
       case 7:
         const keyCode = this.registers[6]; // a0
         if (this.pressedKeys.has(keyCode)) {
-          this.registers[6] = 1; // Echo back the key code
+          this.registers[7] = 1; // Echo back the key code
         } else {
-          this.registers[6] = 0; // No key pressed
+          this.registers[7] = 0; // No key pressed
         }
         break;
       case 8: // Print registers
+        postMessage({ type: "RegPrint" });
         break;
       case 9: // Print memory
+        postMessage({ type: "MemPrint" });
         break;
       case 10:
         this.state = SimulatorState.Halted; // Blocked state
         break;
       default:
-        // console.error(`Unknown syscall code: ${syscallCode}`);
         break;
     }
   }

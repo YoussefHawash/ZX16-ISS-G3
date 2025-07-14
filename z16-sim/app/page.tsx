@@ -1,3 +1,4 @@
+import { useWorker } from "@/lib/BufferContext";
 import Grid from "./_components/Grid";
 import NavBar from "./_components/NavBar";
 

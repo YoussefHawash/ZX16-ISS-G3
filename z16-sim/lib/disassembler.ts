@@ -83,6 +83,9 @@ export function instructionFormat(Type: string, ...args: number[]): string {
 export default function parseInstructionZ16(
   raw: Uint8Array
 ): [string[], Token[][]] {
+  //reset
+  assembly = [];
+  lines = [];
   const words = littleEndianParser(raw); // Parsing to construct list of instructions
 
   for (let i = 0; i < words.length; i++) {

@@ -40,8 +40,11 @@ export function SharedBuffersProvider({ children }: { children: ReactNode }) {
   const buffers = sharedBuffers;
   const workerRef = useRef<Worker>(null);
   const [assembly, setAssembly] = useState<string[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
+    const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+    audioCtxRef.current = new Ctor();
     if (!workerRef.current) {
       const w = new Worker(new URL("./worker.ts", import.meta.url), {
         type: "module",
