@@ -715,9 +715,7 @@ resetScore:
         ecall 7
         li t0, 1
         bne a1, t0, halt1Loop # Wait for 'r' to be pressed to reset the game
-         li16 a0, 'R'
-        ecall 7
-          bne a1, t0, halt1Loop # Wait for 'r' to be pressed to reset the game
+
         ret
 
 point2Check:
@@ -740,6 +738,12 @@ point2Check:
         j point_P2 # Jump to point for player 2
 
 collisionWithP1:
+        li16 a0, 254
+        ecall 5
+        li16 a0, 500
+        li16 a1, 100
+        ecall 4
+
         la t0, ballState
         lb s1, 0(t0) # Load the current state of the ball
         li t1, 0 # Approaching with direction bottom-left
@@ -764,6 +768,12 @@ checkP2Collision:
         j point2Check
 
 collisionWithP2:
+ li16 a0, 254
+        ecall 5
+        li16 a0, 500
+        li16 a1, 100
+        ecall 4
+
         la t0, ballState
         lb s1, 0(t0) # Load the current state of the ball
         li t1, 1 # Approaching with direction bottom-right
