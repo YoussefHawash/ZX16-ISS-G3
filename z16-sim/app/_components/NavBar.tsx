@@ -79,15 +79,16 @@ export default function NavBar() {
             <CustomDialogTrigger onClick={() => setIsOpen(true)}>
               <button
                 className="
+                ml-4
           text-green-400 border border-green-400
-          px-3 py-2 rounded-2xl text-xs
+          px-3 py-1 rounded-2xl text-xs
           hover:bg-green-400 hover:text-black
           transition-colors duration-200
           hover:cursor-pointer
           hover:shadow-lg hover:shadow-green-500/30
         "
               >
-                Try our Assembler
+                Try our Assembler !!
               </button>
             </CustomDialogTrigger>
 

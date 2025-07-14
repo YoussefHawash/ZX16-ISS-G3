@@ -175,7 +175,7 @@ export function NumberConverter() {
   return (
     <Dialog>
       <DialogTrigger className="hover:cursor-pointer text-xs">
-        <ArrowRightLeft />
+        <ArrowRightLeft size={20} />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
