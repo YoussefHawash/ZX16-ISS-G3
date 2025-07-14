@@ -1,3 +1,4 @@
+J 32
 ADD x0, x0
 ADD x0, x0
 ADD x0, x0
@@ -13,21 +14,20 @@ ADD x0, x0
 ADD x0, x0
 ADD x0, x0
 ADD x0, x0
-ADD x0, x0
-LI x1, 0x0a
-LI x2, 0x03
-ADD x3, x2
-SUB x4, x1
-XOR x5, x2
-AND x6, x1
-OR x7, x1
-SLT x1, x2
-SLTU x2, x1
-SLL x3, x2
-SRL x4, x1
-SRA x5, x2
-MV x6, x3
-ADD x0, x0
+LI x4, 0x00
+J 8
+LI x4, 0x3c
+LI x4, 0x3c
+LI x4, 0x3c
+LI x2, 0x19
+ADD x2, x2
+J 6
+LI x3, 0x37
+J 6
+LI x4, 0x2c
+JR  x2
+LI x7, 0x3c
+ECALL 10    # ProgramExit
 ADD x0, x0
 ADD x0, x0
 ADD x0, x0

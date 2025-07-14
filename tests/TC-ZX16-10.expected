@@ -1,0 +1,70 @@
+LUI x6, 0x002
+ADDI x6, 0x7e
+ECALL 5    # SetAudioVolume
+LUI x6, 0x004
+ADDI x6, 0x0b
+LUI x7, 0x001
+ADDI x7, 0x64
+ECALL 4    # PlayTone
+LUI x6, 0x005
+ADDI x6, 0x13
+LUI x7, 0x001
+ADDI x7, 0x64
+ECALL 4    # PlayTone
+LUI x6, 0x006
+ADDI x6, 0x10
+LUI x7, 0x001
+ADDI x7, 0x64
+ECALL 4    # PlayTone
+LUI x6, 0x008
+ADDI x6, 0x5b
+LUI x7, 0x001
+ADDI x7, 0x64
+ECALL 4    # PlayTone
+LUI x6, 0x008
+ADDI x6, 0x16
+LUI x7, 0x002
+ADDI x7, 0x48
+ECALL 4    # PlayTone
+LUI x6, 0x008
+ADDI x6, 0x16
+LUI x7, 0x001
+ADDI x7, 0x16
+ECALL 4    # PlayTone
+LUI x6, 0x007
+ADDI x6, 0x70
+LUI x7, 0x001
+ADDI x7, 0x78
+ECALL 4    # PlayTone
+LUI x6, 0x006
+ADDI x6, 0x10
+LUI x7, 0x001
+ADDI x7, 0x78
+ECALL 4    # PlayTone
+LUI x6, 0x005
+ADDI x6, 0x13
+LUI x7, 0x001
+ADDI x7, 0x16
+ECALL 4    # PlayTone
+LUI x6, 0x004
+ADDI x6, 0x0b
+LUI x7, 0x002
+ADDI x7, 0x48
+ECALL 4    # PlayTone
+LUI x6, 0x006
+ADDI x6, 0x10
+LUI x7, 0x001
+ADDI x7, 0x50
+ECALL 4    # PlayTone
+LUI x6, 0x008
+ADDI x6, 0x5b
+LUI x7, 0x001
+ADDI x7, 0x50
+ECALL 4    # PlayTone
+LUI x6, 0x008
+ADDI x6, 0x16
+LUI x7, 0x002
+ADDI x7, 0x7a
+ECALL 4    # PlayTone
+ADD x0, x0
+ADD x0, x0
