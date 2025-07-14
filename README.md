@@ -1,3 +1,4 @@
+
 # G3 - ZX16 Instruction Set Simulator (ISS)
 
 ## Project Objective
@@ -26,43 +27,56 @@ We extended the project with a complete **graphical frontend**, making it intuit
 
 - **Web Interface** built with Next.js + Monaco Editor
 
+- **Built-in Assembler** for easier Devlopment Enviroment
+
 ## Repository Structure
 
 ```bash
 
-├  z16-sim/  # Next JS Website
-
-├-  app/
-
-├──  _components/  # Frontend React components
-
-│  ├──  codewindow.tsx  # Monaco editor with syntax highlighting
-
-│  ├──  computer.tsx  # Main CPU interface container
-
-│  ├──  keyboard.tsx  # Virtual keyboard visualization
-
-│  ├──  registerTable.tsx  # Register view
-
-│  ├──  screen.tsx  # Tile-based display
-
-│  ├──  terminal.tsx  # CLI logger
-
-│  └──  TextUpload.tsx  # Upload component for .bin files
-
-├─lib/
-
-│  ├──  cpu.ts  # Core simulation logic
-
-│  ├──  disassembler.ts  # Machine code to human-readable translation
-
-│  ├──  utils.ts  # Utilities
-
-│  ├──  z16-INST.json  # Instruction format definitions
-
-├─  public/
-
-│  └──  monaco/  # Monaco Editor dependency
+z16-sim/  
+├── app/  
+│ ├── _components/  
+│ │ ├── CodeEditor.tsx   # CodeEditor to show the assembly Code
+│ │ ├── convertor.tsx  	# Bases Convertor
+│ │ ├── custom-dialog.tsx  # For hosting the code editor
+│ │ ├── Editor.tsx  # Custom Editor for writing assembly
+│ │ ├── Grid.tsx  # Grid Layout
+│ │ ├── NavBar.tsx  # Navbar
+│ │ ├── Panel.tsx  # To host the console
+│ │ ├── screen.tsx  
+│ │ ├── Side-Menu.tsx  
+│ │ └── TextUpload.tsx  
+│ ├── api/  
+│ │ └── assemble/  
+│ │ └── route.ts  # Assembler API
+│ ├── favicon.ico  
+│ ├── globals.css  
+│ ├── layout.tsx  
+│ └── page.tsx  
+├── components/  
+├── hooks/  
+│	└── use-cpu.ts  
+├── lib/  
+│ ├── Types/  
+│ │── BufferContext.tsx  
+│ ├── constants.ts  
+│ ├── cpu.ts  # simulator
+│ ├── disassembler.ts  # disassembler
+│ ├── utils.ts  
+│ └── worker.ts  
+├── node_modules/  
+├── public/  
+│ ├── monaco/  
+│ └── logo.svg  
+├── z16-INST.json  
+├── scripts/  # Assembler Code
+│ ├── constants.py  
+│ ├── definitions.py  
+│ ├── error_handler.py  
+│ ├── first_pass.py  
+│ ├── main.py  
+│ ├── second_pass.py  
+│ └── tokenizer.py
 
 ```
 
@@ -77,6 +91,7 @@ We extended the project with a complete **graphical frontend**, making it intuit
 - Implements `ecall`-based system calls for I/O, audio, memory dumps, and termination.
 
 - Tracks a program counter, 8 general-purpose registers (`x0-x7`), and memory changes on every clock cycle.
+- Integerated Assembler for easier devlopement 
 
 ### Frontend (UI)
 
@@ -222,8 +237,7 @@ This approach allowed us to emulate real-time behavior and maintain visual respo
 - [ZX16 ISA Repository](https://github.com/shalan/z16.git)
 
 - CSCE 2303 Project Description (zx16-sim.pdf)
-- 
-- [Youssef Hawash](https://github.com/YoussefHawash) and [Abdallah Mostafa](https://github.com/AbdallahMostafaIbrahim) Worked on an Enhanced Assembler to suite the needs for the porject
+- [Youssef Hawash](https://github.com/YoussefHawash) and [Abdallah Mostafa](https://github.com/AbdallahMostafaIbrahim) Worked on an Enhanced Assembler to suite the needs for this project
 ---
 
 ## License
