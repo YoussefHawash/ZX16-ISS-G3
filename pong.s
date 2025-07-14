@@ -40,9 +40,54 @@ tile_def:
                 .byte 0x00, 0x06, 0x33, 0x33, 0x33, 0x33, 0x60, 0x00
                 .byte 0x00, 0x00, 0x66, 0x33, 0x33, 0x66, 0x00, 0x00
                 .byte 0x00, 0x00, 0x00, 0x66, 0x66, 0x00, 0x00, 0x00
-    tile5:  .space 128
-    tile6:  .space 128
-    tile7:  .space 128
+    tile5:      .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00      # Top Padel Tile
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x11, 0x11, 0x11, 0x11, 0x00, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+    tile6:      .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00      # Middle Padel Tile
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+    tile7:      .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00      # Bottom Padel Tile
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x01, 0x11, 0x11, 0x11, 0x11, 0x10, 0x00
+                .byte 0x00, 0x00, 0x11, 0x11, 0x11, 0x11, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     tile8:  .space 128
     tile9:  .space 128
     tile10: .space 128
@@ -69,7 +114,7 @@ newGame:
         la a0, selectScreen
         call drawScreen
 
-selectPlayers:
+        selectPlayers:
         li16 a0, '1' # ASCII code for '1'
         ecall 7
         li t0, 1
@@ -79,10 +124,10 @@ selectPlayers:
         beq a1, t0, two_player_mode
         j selectPlayers # If neither '1' nor '2' was pressed, loop again
 
-one_player_mode:
+        one_player_mode:
         j gameLoop
 
-two_player_mode:
+        two_player_mode:
         la a0, pongScreen
         call drawScreen
         
@@ -187,7 +232,7 @@ moveUp1:
         sw s0, 0(t0) # Update the position of player 1
         la t1, tile_map
         add t1, s0
-        li s1, 1 # Load a white tile at the start of the padel for player 1
+        li s1, 6 # Load padel tile at the start of the padel for player 1
         sb s1, 0(t1) # Load the tile map
 
         addi s0, 60 # Delete the bottom of player 1s padel that is positioned under the top of the padel by 60 pixels
@@ -216,7 +261,7 @@ moveDown1:
         addi s0, 40
         la t1, tile_map
         add t1, s0
-        li s1, 1 # Load a white tile at the end of the padel for player 1
+        li s1, 6 # Load the padel tile at the end of the padel for player 1
         sb s1, 0(t1) # Load the tile map
 
         addi s0, -60 # Delete the top of player 1s padel that is positioned above the end of the padel by 60 pixels
@@ -264,7 +309,7 @@ moveUp2:
         sw s0, 0(t0) # Update the position of player 2
         la t1, tile_map
         add t1, s0
-        li s1, 1 # Load a white tile at the start of the padel for player 2
+        li s1, 6 # Load the padel tile at the start of the padel for player 2
         sb s1, 0(t1) # Load the tile map
 
         addi s0, 60 # Delete the bottom of player 2s padel that is positioned under the top of the padel by 60 pixels
@@ -292,7 +337,7 @@ moveDown2:
         addi s0, 40
         la t1, tile_map
         add t1, s0
-        li s1, 1 # Load a white tile at the end of the padel for player 2
+        li s1, 6 # Load the padel tile at the end of the padel for player 2
         sb s1, 0(t1) # Load the tile map
 
         addi s0, -60 # Delete the top of player 2s padel that is positioned above the end of the padel by 60 pixels
@@ -743,7 +788,7 @@ collisionWithP1:
         li16 a0, 500
         li16 a1, 100
         ecall 4
-
+        
         la t0, ballState
         lb s1, 0(t0) # Load the current state of the ball
         li t1, 0 # Approaching with direction bottom-left
@@ -768,7 +813,7 @@ checkP2Collision:
         j point2Check
 
 collisionWithP2:
- li16 a0, 254
+        li16 a0, 254
         ecall 5
         li16 a0, 500
         li16 a1, 100
@@ -875,11 +920,11 @@ selectScreen:
         .byte 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0
         .byte 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0
-        .byte 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0
-        .byte 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0
-        .byte 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0
-        .byte 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        .byte 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 pongScreen:
@@ -889,9 +934,9 @@ pongScreen:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-        .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-        .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+        .byte 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6
+        .byte 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6
+        .byte 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
