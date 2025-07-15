@@ -86,7 +86,7 @@ const Screen = memo(({ className }: { className?: string }) => {
       let idx = 0;
       for (let ty = 0; ty < 15; ty++) {
         for (let tx = 0; tx < 20; tx++, idx++) {
-          const tile = readByte(mbase + idx);
+          const tile = readByte(mbase + idx) & 0x0f;
           ctx.drawImage(sheet, tile * 16, 0, 16, 16, tx * 16, ty * 16, 16, 16);
         }
       }
