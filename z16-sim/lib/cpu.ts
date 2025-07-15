@@ -394,7 +394,7 @@ export class CPU {
         const offset = instruction[2].SignedValue;
         const rs2 = instruction[3].value;
         const addr = this.registers[rs2] + offset;
-        this.registers[rd] = (this.memory[addr] << 8) | this.memory[addr + 1];
+        this.registers[rd] = this.memory[addr] ;
         break;
       }
       case "LUI": {
