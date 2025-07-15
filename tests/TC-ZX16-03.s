@@ -1,17 +1,48 @@
-# x1 =10   0000 0000 0000 1010
-# x2 = 3   0000 0000 0000 0011 
-# x3 = 2   0000 0000 0000 0010
-# x4 = -16 1111 1111 1111 0000
-Add x1 ,x2  #x1=13    0000000000001101  
-SLTU x2 ,x1  #x2 =0000 0000 0000 0001
-NOT x2        #x2 = 1111 1111 1111 1100  65532
-SLL x2 ,x1    #x2=  1100 0000 0000 0000  49152
-LI x3,-16
-SRAI x3, 2    #x3 = 0000 0000 0000 0000  0
-OR  x1 , x3   #x1=  0000 0000 0000 1101 13
-OR x3, x2  	#x3 =1100 0000 0000 1101 49152
-XOR x2, x4	#x2 = 0011 1111 1111 1101 16381
-MV  x5 ,x1      #x5 = 0000 0000 0000 1101 13
-ECALL 0x008
-# x0 =0 x1= 13 x2= 16381 x3=49152 x4= -16 x5 =13
-ECALL 0x00A
+.text
+.org 0x0020
+
+main:
+    li     x1, 5
+    li     x2, 5
+    li     x3, 2
+    li     x4, 3
+    li     x6, 0
+    li     x7, 1
+
+    beq    x1, x2, eq_label
+    li     x5, 1
+    li     x5, 2
+    li     x5, 3
+    li     x5, 4
+    li     x5, 5
+    li     x5, 6
+
+eq_label:
+    blt    x3, x4, lt_label
+    li     x5, 8
+    li     x5, 9
+    li     x5, 10
+    li     x5, 11
+    li     x5, 12
+    li     x5, 13
+
+lt_label:
+    bz     x6, zero_label
+    li     x5, 15
+    li     x5, 16
+    li     x5, 17
+    li     x5, 18
+    li     x5, 19
+    li     x5, 20
+
+zero_label:
+    bnz    x7, final_label
+    li     x5, 22
+    li     x5, 23
+    li     x5, 24
+    li     x5, 25
+    li     x5, 26
+    li     x5, 27
+
+final_label:
+    li16   x5, 1234

@@ -356,20 +356,20 @@ class SecondPass:
 
             # Immediate
             if isinstance(field, NumericField):
-                if field.label ^ (token.type is TokenType.LABEL_USE):
-                    Zx16Errors.add_error(
-                        f"Expected token {TOKEN_TYPE_NAMES[TokenType.IMMEDIATE]}, got {TOKEN_TYPE_NAMES[token.type]} for '{mnemonic}'",
-                        token.line,
-                        token.column,
-                    )
-                    return
-                if (not field.label) ^ (token.type is TokenType.IMMEDIATE):
-                    Zx16Errors.add_error(
-                        f"Expected token {TOKEN_TYPE_NAMES[TokenType.LABEL_USE]}, got {TOKEN_TYPE_NAMES[token.type]} for '{mnemonic}'",
-                        token.line,
-                        token.column,
-                    )
-                    return
+                # if field.label ^ (token.type is TokenType.LABEL_USE):
+                #     Zx16Errors.add_error(
+                #         f"Expected token {TOKEN_TYPE_NAMES[TokenType.IMMEDIATE]}, got {TOKEN_TYPE_NAMES[token.type]} for '{mnemonic}'",
+                #         token.line,
+                #         token.column,
+                #     )
+                #     return
+                # if (not field.label) ^ (token.type is TokenType.IMMEDIATE):
+                #     Zx16Errors.add_error(
+                #         f"Expected token {TOKEN_TYPE_NAMES[TokenType.LABEL_USE]}, got {TOKEN_TYPE_NAMES[token.type]} for '{mnemonic}'",
+                #         token.line,
+                #         token.column,
+                #     )
+                #     return
 
                 imm = int(token.value, 0)
                 if field.label:

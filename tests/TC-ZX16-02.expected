@@ -1,14 +1,33 @@
-ADDi x1 ,45  
-LI x2,33    
-LI x3 ,77
-SLTUI x2 ,30  
-XORI x2, -1       
-ADDI x2, 1       
-SLLI x2 ,3    
-SRAI x3  4    
-ORI  x1 , 22   
-ANDI x3, 85  
-XORI x2, 55	
-XOR x2, x2       
-ECALL 0x008
-ECALL 0x00A
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+ADD x0, x0
+LI x1, 0x0a
+LI x2, 0x03
+ADDI x3, 0x05
+ADDI x4, 0x7e
+SLTI x5, 0x04
+SLTUI x6, 0x3f
+ORI x1, 0x0f
+ANDI x2, 0x06
+XORI x3, 0x05
+LI x4, 0x01
+SLLI x4, 0x4
+LI x5, 0x20
+SRLI x5, 0x2
+LI x6, 0x78
+SRAI x6, 0x1
+ADD x0, x0
+ADD x0, x0
