@@ -292,6 +292,16 @@ export class CPU {
           break;
         }
       }
+      case "BNZ": {
+        const rs1 = instruction[1].value;
+        const offset = instruction[2].SignedValue;
+        if (this.registers[rs1] != 0) {
+          this.pc = this.pc + offset; // Jump to the address specified by imm}
+          return;
+        } else {
+          break;
+        }
+      }
       case "BLT": {
         const rs1 = instruction[1].value;
         const rs2 = instruction[2].value;
