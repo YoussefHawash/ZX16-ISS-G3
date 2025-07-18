@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const outputDir = path.join(tmpDir, "output");
   const inputPath = path.join(tmpDir, "Input.s");
   const outputPath = path.join(outputDir, "output.bin");
-  const scriptPath = path.join(process.cwd(), "scripts", "main.py");
+  const scriptPath = path.join(process.cwd(), "scripts", "src","main.py");
 
   // ensure directories
   await fs.mkdir(outputDir, { recursive: true });

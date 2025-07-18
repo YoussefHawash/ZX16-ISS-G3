@@ -1,0 +1,3 @@
+[submodule "z16-sim/scripts"]
+	path = z16-sim/scripts
+	url = git@github.com:AbdallahMostafaIbrahim/z16-assembler.git
