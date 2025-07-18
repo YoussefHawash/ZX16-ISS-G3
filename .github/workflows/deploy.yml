@@ -23,6 +23,7 @@ jobs:
           script: |
             cd /home/ubuntu/ZX16-ISS-G3
             git pull origin main
+            cd /z16-sim
             npm install
             npm run build
             pm2 restart z16
