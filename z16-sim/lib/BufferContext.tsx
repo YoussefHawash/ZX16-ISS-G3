@@ -9,7 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Buffers } from "./Types/Definitions";
+import { Buffers } from "../types/Definitions";
 
 // buffer sizes
 const MEMORY_SIZE = 0x10000; // 64 KB

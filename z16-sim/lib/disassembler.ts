@@ -1,5 +1,5 @@
+import { ECALLService, Token } from "../types/Definitions";
 import { instructionFormats } from "./constants";
-import { ECALLService, Token } from "./Types/Definitions";
 import { binaryToHex, getSignedValue, littleEndianParser } from "./utils";
 
 let assembly: string[] = [];

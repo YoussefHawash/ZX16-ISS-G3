@@ -1,4 +1,4 @@
-import { getSignedValue } from "../utils";
+import { getSignedValue } from "../lib/utils";
 
 export enum ECALLService {
   ReadString = 1,

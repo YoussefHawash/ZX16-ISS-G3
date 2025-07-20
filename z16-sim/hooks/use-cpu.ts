@@ -5,7 +5,7 @@ import {
   useWorker,
 } from "@/lib/BufferContext";
 import { CPU } from "@/lib/cpu";
-import { SimulatorState } from "@/lib/Types/Definitions";
+import { SimulatorState } from "@/types/Definitions";
 import { useEffect } from "react";
 
 export default function Simulator() {

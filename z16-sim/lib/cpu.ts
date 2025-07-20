@@ -1,4 +1,4 @@
-import { SimulatorState, Token } from "./Types/Definitions";
+import { SimulatorState, Token } from "../types/Definitions";
 import parseInstructionZ16 from "./disassembler";
 import { handleSign } from "./utils";
 export class CPU {
@@ -394,7 +394,7 @@ export class CPU {
         const offset = instruction[2].SignedValue;
         const rs2 = instruction[3].value;
         const addr = this.registers[rs2] + offset;
-        this.registers[rd] = this.memory[addr] ;
+        this.registers[rd] = this.memory[addr];
         break;
       }
       case "LUI": {

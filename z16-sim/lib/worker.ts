@@ -1,6 +1,6 @@
 // Worker script for the z16-sim simulator - worked with abdallah moustafa on it
+import { SimulatorState } from "../types/Definitions";
 import { CPU } from "./cpu";
-import { SimulatorState } from "./Types/Definitions";
 
 let buffers: {
   memory: SharedArrayBuffer;
