@@ -39,31 +39,59 @@ export default function NavBar() {
       // try to parse JSON error
       let errMsg = "Unknown error";
       try {
-        const err = await res.json();
-        errMsg = err.error || JSON.stringify(err);
+        const errorBody = await res.json();
+        errMsg =
+          errorBody.error + errorBody.stderr || "Error from assembler service";
       } catch {}
-      toast.error(`Error assembling code: ${errMsg}`);
+      toast.error(
+        `Error Accessing the Assembler Service  with code: ${errMsg}`
+      );
     }
 
-    if (downloadMode) {
-      // DOWNLOAD path
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "output.bin";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Download started!");
-      setIsOpen(false);
+    const body = await res.json();
+    console.log("Assemble response:", body);
+    if (body.stderr.includes("Assembly completed successfully")) {
+      if (downloadMode) {
+        // DOWNLOAD path
+        const b64 = body.output_bin_b64 as string;
+        const binaryString = atob(b64);
+        const arrayBuffer = new Uint8Array(
+          [...binaryString].map((char) => char.charCodeAt(0))
+        ).buffer;
+        const url = URL.createObjectURL(new Blob([arrayBuffer]));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "output.bin";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Download started!");
+        setIsOpen(false);
+      } else {
+        // LOAD path
+        const b64 = body.output_bin_b64 as string;
+        const binaryString = atob(b64);
+        const arrayBuffer = new Uint8Array(
+          [...binaryString].map((char) => char.charCodeAt(0))
+        ).buffer;
+        load(arrayBuffer);
+        toast.success("Assemble successful!");
+        setIsOpen(false);
+      }
     } else {
-      // LOAD path
-      const arrayBuffer = await res.arrayBuffer();
-      load(arrayBuffer);
-      toast.success("Assembled and loaded into memory!");
-      setIsOpen(false);
+      // Parse stderr, remove control characters, and show only the first error line if available
+      const cleanStderr = body.stderr
+        .replace(/[\x00-\x1F\x7F]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      const errorLines = cleanStderr
+        .split("\n")
+        .filter((line: string) => line.trim());
+      const firstError =
+        errorLines.length > 0 ? errorLines[0] : "Unknown error";
+      toast.error(`Error: ${firstError}`);
+      return;
     }
     return;
   };

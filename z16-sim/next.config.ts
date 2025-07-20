@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
-// To enable SharedArrayBuffer in Next.js, you need to set the appropriate headers
-export default nextConfig;
-module.exports = {
+  env: {
+    ASSEMBLER_URL: process.env.ASSEMBLER_URL,
+  },
   async headers() {
     return [
       {
@@ -24,3 +22,5 @@ module.exports = {
     ];
   },
 };
+
+export default nextConfig;
