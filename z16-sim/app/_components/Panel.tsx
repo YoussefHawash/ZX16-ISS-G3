@@ -53,7 +53,6 @@ function Console() {
 
         case "readStr":
           setCommand(2);
-          console.log("readStr command received");
           toast.info("waiting for input...");
           inputRef.current?.focus();
           break;

@@ -5,7 +5,6 @@ export async function POST(req: NextRequest) {
   try {
     // Get the request body
     const body = await req.text();
-    console.log("Received body:", config.assemblerUrl);
     // Forward body to your Lambda
     const awsRes = await fetch(config.assemblerUrl, {
       method: "POST",

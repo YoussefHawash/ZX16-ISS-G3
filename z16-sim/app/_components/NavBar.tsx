@@ -49,7 +49,6 @@ export default function NavBar() {
     }
 
     const body = await res.json();
-    console.log("Assemble response:", body);
     if (body.stderr.includes("Assembly completed successfully")) {
       if (downloadMode) {
         // DOWNLOAD path
